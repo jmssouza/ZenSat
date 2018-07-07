@@ -3,7 +3,7 @@
  * Author: jmssouza                                                                *
  *                                                                                 *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-SASAKY GAY DA PORAAAAAA
+
 #include "zenith.h"
 
 int headerInterface(){
