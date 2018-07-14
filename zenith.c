@@ -171,12 +171,18 @@ int blockBuilder(char *block, int operating_mode, int aux){
 
     switch (operating_mode){
         case 0 : {
-            block[0] = 'o';
-            block[1] = 'i';
+            block = (char*)"I'mStillAlive"
         }
         case 1 : { // Mission 1
-            valueGetter(HEALTH_NUMBER, &aux);
-            readMessage(HEALTH_FILE, block, aux, BLOCK_SIZE, 1);
+            if(aux == 0){//Base code
+
+            }
+            else if (aux == 1){//ZenSat code
+
+            }
+            else{
+
+            }
             break;
         }
         case 2 : {
@@ -258,18 +264,26 @@ int packageCreator(char *pack_num_file, char *pack_cycle_file, char *block, char
     return 0;
 } //finished
 
-int missedPackagesChecker(int expected_package, int received_package){
+int missedPackagesChecker(int expected_package, int received_package, int expected_cycle, int received_cycle){
 
     int missed_packages = 0;
 
-    if (expected_package == received_package){
-        valueSetter(TM_NUMBER, expected_package);
+    if ((expected_package == received_package)&&(expected_cycle == received_cycle)){
+        valueSetter(TC_NUMBER, expected_package);
+        valueSetter(TC_CYCLE , expected_cycle  );
         return 0;
     }
     else {
         //Criar função que trate os pacotes perdidos
-        missed_packages = expected_package - received_package;
-        return missed_packages;
+        if((received_cycle-expected_cycle<2) &&(received_cycle>=expected_cycle)){
+            missed_packages = expected_cycle * expected_package - received_cycle * received_package;
+            valueSetter(TC_NUMBER, received_package);
+            valueSetter(TC_CYCLE , received_cycle  );
+            return missed_packages;
+        }
+        else{
+            return -1;
+        }
     }
 }
 
@@ -278,58 +292,69 @@ int packageAnalyzer(){
     char message[255];
     char missed_array[255];
     int aux;
+    int temp;
     int i = 0;
     int pack_num_system       = 0;
+    int pack_cycle_system     = 0;
     int operating_mode_system = 0;
-    int missed_packages        = 0;
+    int missed_packages       = 0;
     int pack_num_received[3]  = {0,0,0};
+    int pack_cycle_received   = 0;
     int operating_mode_rec[3] = {0,0,0};
 
-    valueGetter(TC_NUMBER, &pack_num_system);
+    valueGetter(TC_NUMBER, &pack_num_system  );
+    valueGetter(TC_CYCLE , &pack_cycle_system);
     readMessage(NEW_TC, message, 0, PACK_SIZE, 1);
 
-    pack_num_received[0] = message[0];
-    pack_num_received[1] = message[123];
-    pack_num_received[2] = message[252];
+    pack_num_received[0]  = message[0];
+    pack_num_received[1]  = message[123];
+    pack_num_received[2]  = message[252];
+
+    pack_cycle_received   = message[1];
 
     operating_mode_rec[0] = message[2];
     operating_mode_rec[1] = message[124];
     operating_mode_rec[2] = message[253];
 
-    aux = correctValue(pack_num_received);
-    if (aux >= 0){
-
-        missed_packages = missedPackagesChecker(pack_num_system+1, aux);
-        pack_num_system = aux;
-        valueSetter(TC_NUMBER, pack_num_system);
-        writeMessage(TC_FILE, message, pack_num_system, PACK_SIZE, 1);
-        printf(" - Package %d received! \n", pack_num_system);
-
-
-        if (missed_packages != 0){
-            printf("\nI have entry in missed_packets\n");
-            valueSetter(MISSED_PACKAGES, missed_packages);
-            for (i=0;i<missed_packages;i++){
-                missed_array[i]= pack_num_system - missed_packages + i;
-            }
-            writeMessage(MISSED_PACKAGES, missed_array, 0, PACK_SIZE, 1);
-        }
-        else{
-            printf("\nI did not lost a pack\n");
-            for (i=0;i<missed_packages;i++){
-                missed_array[i] = 0;
-            }
-            writeMessage(MISSED_PACKAGES, missed_array, 0, PACK_SIZE, 1);
-        }
-    }
-    else{
-        printf("\n The package has problems with pack_number");
-    }
-
     aux = correctValue(operating_mode_rec);
     if (aux >= 0 && aux <= 8){
         operating_mode_system = aux;
         valueSetter(MODE_FILE, operating_mode_system);
+        aux = correctValue(pack_num_received);
+        if (aux >= 0){
+            if (pack_num_system>aux){ temp = pack_cycle_system + 1; }
+            else {temp = pack_cycle_system; }
+
+            missed_packages = missedPackagesChecker(pack_num_system+1, aux, temp,  pack_cycle_received);
+            pack_num_system = aux;
+
+            if(missed_packages>=0){
+                pack_cycle_system = temp;
+                writeMessage(TC_FILE, message, pack_num_system + pack_cycle_system*PACK_SIZE, PACK_SIZE, 1);
+
+                if (missed_packages != 0) {
+                    valueSetter(MISSED_PACKAGES, missed_packages);
+                    for (i = 0; i < missed_packages; i++) {
+                        missed_array[i] = pack_num_system - missed_packages + i;
+                    }
+                    writeMessage(MISSED_PACKAGES, missed_array, 0, PACK_SIZE, 1);
+                }
+                else {
+                    for (i = 0; i < missed_packages; i++) {
+                        missed_array[i] = 0;
+                    }
+                    writeMessage(MISSED_PACKAGES, missed_array, 0, PACK_SIZE, 1);
+                }
+            }
+            else{
+                printf("\nCorrupted package");
+                return 0;
+            }
+        }
+        else{
+            printf("\nCorrupted package");
+            return 0;
+        }
         return 1;
     }
     else{
@@ -343,6 +368,7 @@ int packageAnalyzer(){
 int createBackup(){
 
     system("cp " CHECK_POWERED   " "  CHECK_POWERED_CP   );
+    system("cp " NEW_TM          " "  NEW_TM_CP          );
     system("cp " TM_FILE         " "  TM_FILE_CP         );
     system("cp " TM_NUMBER       " "  TM_NUMBER_CP       );
     system("cp " TM_CYCLE        " "  TM_CYCLE_CP        );
@@ -526,6 +552,19 @@ int read_i2c(char *file_name, int position, int addr,int chan){
 
 */
 
+int sendSimpleMessage(char *block, int op_mode, int aux){
+
+    char pack[PACK_SIZE];
+
+    blockBuilder(block, op_mode, aux);
+    packageCreator(TM_NUMBER, TM_CYCLE, block, pack);
+    writeMessage(NEW_TM, pack, 0, PACK_SIZE, 0);
+    //write_i2c(NEW_TM, 0, 1, adr, chanel);
+
+    return 0;
+}
+
+
 //Install functions
 
 int createFile(char *file_name){
@@ -554,17 +593,18 @@ int createZenithFiles(){
     int aux[12];
 
     aux[ 0] = createFile(CHECK_POWERED);
-    aux[ 1] = createFile(TM_FILE);
-    aux[ 2] = createFile(TM_NUMBER);
-    aux[ 3] = createFile(TM_CYCLE);
-    aux[ 4] = createFile(NEW_TC);
-    aux[ 5] = createFile(TC_FILE);
-    aux[ 6] = createFile(TC_NUMBER);
-    aux[ 7] = createFile(TC_CYCLE);
-    aux[ 8] = createFile(MISSED_PACKAGES);
-    aux[ 9] = createFile(MODE_FILE);
-    aux[10] = createFile(HEALTH_FILE);
-    aux[11] = createFile(HEALTH_NUMBER);
+    aux[ 1] = createFile(NEW_TM);
+    aux[ 2] = createFile(TM_FILE);
+    aux[ 3] = createFile(TM_NUMBER);
+    aux[ 4] = createFile(TM_CYCLE);
+    aux[ 5] = createFile(NEW_TC);
+    aux[ 6] = createFile(TC_FILE);
+    aux[ 7] = createFile(TC_NUMBER);
+    aux[ 8] = createFile(TC_CYCLE);
+    aux[ 9] = createFile(MISSED_PACKAGES);
+    aux[10] = createFile(MODE_FILE);
+    aux[11] = createFile(HEALTH_FILE);
+    aux[12] = createFile(HEALTH_NUMBER);
 
     for (i=0;i<12;i++){
         if (aux[i] != 0){
@@ -870,8 +910,40 @@ int interfaceOperator(){
     return mode;
 }
 
-int displayData(char *package){
-    //Deve printar as informações de cada pacote da forma mais conveniente
+int displayData(char *package){ ;
+
+    int pack_number = 0;
+    int pack_cycle  = 0;
+    int op_mode     = 0;
+    int pack_num_received[3]  = {0,0,0};
+    int pack_cycle_received   = 0;
+    int operating_mode_rec[3] = {0,0,0};
+
+
+    pack_num_received[0]  =  package[0];
+    pack_num_received[1]  =  package[123];
+    pack_num_received[2]  =  package[252];
+    pack_cycle_received   =  package[1];
+    operating_mode_rec[0] =  package[2];
+    operating_mode_rec[1] =  package[124];
+    operating_mode_rec[2] =  package[253];
+
+    pack_number =  correctValue(pack_cycle_received);
+    op_mode     =  correctValue(operating_mode_rec);
+
+    headerInterface();
+    printf(" Pack number: &d;  Pack cycle: %d;");
+
+    switch (op_mode){
+        case 1:{ break;}
+        case 2:{ break;}
+        case 3:{ break;}
+        case 4:{ break;}
+        case 5:{ break;}
+        case 6:{ break;}
+        case 7:{ break;}
+    }
+
     return 0;
 }
 
@@ -891,12 +963,14 @@ int changeOperatingMode(){
     printf("\n     5. ZenSat pointing;");
     printf("\n     6. Livefeed;");
     printf("\n     7. Temperature monitor;");
-    pritf("\n\n\n\n Your option: ");
+    printf("\n\n\n\n Your option: ");
     scanf("%d", &op);
 
     switch (op) {
         case 1: {
-            packageCreator(TC_FILE, TC_CYCLE, block, package);
+
+            sendSimpleMessage(block,op,0);
+            displayData(package);
             //CRIAR PACOTE DE MUDANÇA DE MODE COM INFO NECESSÁRIA
             //ESPERAR POR PACOTE DE INFO
             //PRINTAR INFO
@@ -955,7 +1029,7 @@ int changeOperatingMode(){
     return 0;
 }
 
-int checkCurrentState(){
+int checkZenSatState(){
     int cycles = 0;
     while(cycles < 3){
         delay(2000000);
@@ -982,8 +1056,8 @@ int readPackages(int mode){
     printf("Mode: %d\n", mode);
     printf("Put the number of the package that you want to read: ");
     scanf("%d", &pack_num);
-    if (mode == 0)     { readMessage(TM_FILE, package, pack_num, PACK_SIZE, 0);}
-    else if (mode == 1){ readMessage(TC_FILE, package, pack_num, PACK_SIZE, 0);}
+    if (mode == 0)     { readMessage(TC_FILE, package, pack_num, PACK_SIZE, 0);}
+    else if (mode == 1){ readMessage(TM_FILE, package, pack_num, PACK_SIZE, 0);}
     else { printf("\nInvalid mode"); return 0; }
 
     displayData(package);
@@ -1106,6 +1180,8 @@ int CubeSat(){
                 valueGetter(HEALTH_NUMBER, &block_position);
                 blockBuilder(block, operating_mode, block_position);
                 packageCreator(TM_NUMBER, TM_CYCLE, block, tm);
+                writeMessage(NEW_TM, tm, 0, PACK_SIZE, 0);
+                //write_i2c(NEW_TM, 0, 1, ,);
                 printf("Message sended: \n    %s", tm);
 
                 valueSetter(MODE_FILE, 0);
@@ -1189,7 +1265,7 @@ int Base(){
         control = interfaceOperator();
         switch (control){
             case 1: { changeOperatingMode(); break; }
-            case 2: { checkCurrentState();   break; }
+            case 2: { checkZenSatState();    break; }
             case 3: { readPackages(0);       break; }
             case 4: { readPackages(1);       break; }
             case 5: { changeToMasterMode();  break; }
@@ -1236,7 +1312,7 @@ int CubeSatTest(){
         msg[252]=pack;
         msg[253]=mode;
 
-        writeMessage(NEW_TC, msg, 0, PACK_SIZE, 0);
+        writeMessage(NEW_TM, msg, 0, PACK_SIZE, 0);
 
         printf("\nDigite 1 para sair.\n");
         scanf ("%d", &i);

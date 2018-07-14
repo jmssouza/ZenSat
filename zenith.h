@@ -7,10 +7,10 @@
         #include <stdlib.h>
         #include <math.h>
         #include <time.h>
-        #include <unistd.h>
-        #include <fcntl.h>
-        #include <sys/ioctl.h>
-        #include <linux/i2c-dev.h>
+        //#include <unistd.h>
+        //#include <fcntl.h>
+        //#include <sys/ioctl.h>
+        //#include <linux/i2c-dev.h>
         #include <string.h>
         #include "constants.h"
         #include "zenith.c"
@@ -31,7 +31,7 @@
         //Package manipulation functions
             int blockBuilder(char *block, int operating_mode, int aux);
             int packageCreator(char *pack_num_file, char *pack_cycle_file, char *block, char *message);
-            int missedPackagesChecker(int expected_package, int received_package);
+            int missedPackagesChecker(int expected_package, int received_package, int expected_cycle, int received_cycle);
             int packageAnalyzer();
         //Initialize and check functions
             int createBackup();
@@ -39,12 +39,13 @@
         //Communication functions
             //int write_i2c(char *file_name, int packet, int qt, int addr,int chan);
             //int read_i2c(char *file_name, int position, int addr,int chan);
+            int sendSimpleMessage(char *block, int op_moode, int aux);
         //Base interface functions
             int headerInterface();
             int interfaceOperator();
             int displayData(char *package);
             int changeOperatingMode();
-            int checkCurrentState();
+            int checkZenSatState();
             int readPackages(int mode);
             int changeToMasterMode();
             int shutdownZenSat();
