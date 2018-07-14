@@ -1,53 +1,69 @@
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * CubeSat v1.0                                                                    *
- * Authors: João Matheus Siqueira Souza      (jmssouza)                            *
- *          Orlando Wozniak de Lima Nogueira ()                                    *
- *          Vinicius Eiji Sasaki             ()                                    *
- * São Carlos School of Engineering - University of São Paulo                      *
- * First semester - 2018                                                           *
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+#ifndef CODE_ZENITH_H
+#define CODE_ZENITH_H
 
-#ifndef CUBESAT_ZENITH_H
-#define CUBESAT_ZENITH_H
 
-//Global variables are declared here
+    //Libraries are declared here
+        #include <stdio.h>
+        #include <stdlib.h>
+        #include <math.h>
+        #include <time.h>
+        #include <unistd.h>
+        #include <fcntl.h>
+        #include <sys/ioctl.h>
+        #include <linux/i2c-dev.h>
+        #include <string.h>
+        #include "constants.h"
+        #include "zenith.c"
 
-    int global_pack_tm_number = 0;
-    int global_pack_tc_number = 0;
 
-//Libraries are declared here
+    //Functions body are declared here
+        //Files manipulation functions
+            int valueGetter(char *file_name, int *value);
+            int valueSetter(char *file_name, int value);
+            int writeMessage(char *file_name, char *message, int position, int size, int check);
+            int readMessage(char *file_name, char *message, int position, int size, int check);
+        //General purpose functions
+            void delay(unsigned int micros);
+            void reverse(char *str, int len);
+            int intToStr(int x, char str[], int d);
+            void ftoa(float n, char *res, int afterpoint);
+            int correctValue(int *values);
+        //Package manipulation functions
+            int blockBuilder(char *block, int operating_mode, int aux);
+            int packageCreator(char *pack_num_file, char *pack_cycle_file, char *block, char *message);
+            int missedPackagesChecker(int expected_package, int received_package);
+            int packageAnalyzer();
+        //Initialize and check functions
+            int createBackup();
+            int initializingCubeSat(int check);
+        //Communication functions
+            //int write_i2c(char *file_name, int packet, int qt, int addr,int chan);
+            //int read_i2c(char *file_name, int position, int addr,int chan);
+        //Base interface functions
+            int headerInterface();
+            int interfaceOperator();
+            int displayData(char *package);
+            int changeOperatingMode();
+            int checkCurrentState();
+            int readPackages(int mode);
+            int changeToMasterMode();
+            int shutdownZenSat();
+        //Install functions
+            int createFile(char *file_name);
+            int createZenithFiles();
+            int compileCodes(int mode);
+            int installer();
 
-    #include <stdio.h>
-    #include <stdlib.h>
-    #include <math.h>
-    #include <time.h>
-    #include <unistd.h>				
-    #include <fcntl.h>				
-    #include <sys/ioctl.h>			
-    #include <linux/i2c-dev.h>		
-    #include <string.h>
-    #include "constants.h"
-    #include "zenith.c"
+            int sendlandeira(char* package);
+            int file_size(char* FILE_NAME);
+            int livefeed_tx(char *FILE_NAME);
 
-//Functions body are declared here
 
-    int headerInterface();
-    int interfaceOperator(int mode, int pack_num, char *info);
-    int valueGetter(char *file_name, int *value);
-    int valueSetter(char *file_name, int value);
-    int writeMessage(char *file_name, char *message, int position, int size, int check);
-    int readMessage(char *file_name, char *message, int position, int size, int check);
-    int write_i2c(char *file_name, int packet, int qt, int addr,int chan);
-    int read_i2c(char *file_name, int position, int addr,int chan);
-    int blockBuilder(char *block, int operating_mode, int aux);
-    int packageCreator(char *pack_num_file, char *pack_cycle_file, char *block, char *message);
-    int missedPackagesChecker(int expected_package, int received_package);
-    int correctValue(int *values);
-    int packageAnalyzer();
-    void delay(unsigned int milis);
-    int Base();
-    int initializingCubeSat();
-    int CubeSat();
-    int CubeSatTest();
+        //Main functions
+            int CubeSat();
+            int Base();
+        //Test functions
+            int CubeSatTest();
 
-#endif //CUBESAT_ZENITH_H
+
+#endif //CODE_ZENITH_H
