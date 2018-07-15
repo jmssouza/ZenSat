@@ -28,6 +28,7 @@
             int intToStr(int x, char str[], int d);
             void ftoa(float n, char *res, int afterpoint);
             int correctValue(int *values);
+            int headerInterface();
         //Package manipulation functions
             int blockBuilder(char *block, int operating_mode, int aux);
             int packageCreator(char *pack_num_file, char *pack_cycle_file, char *block, char *message);
@@ -41,7 +42,6 @@
             //int read_i2c(char *file_name, int position, int addr,int chan);
             int sendSimpleMessage(char *block, int op_moode, int aux);
         //Base interface functions
-            int headerInterface();
             int interfaceOperator();
             int displayData(char *package);
             int changeOperatingMode();

@@ -164,6 +164,14 @@ int correctValue(int *values){
     }
 }
 
+int headerInterface(){
+    system("clear");
+    printf("=========================================================================\n");
+    printf("=                          CubeSat v1 - ZenSat                          =\n");
+    printf("=========================================================================\n");
+    return 0;
+}
+
 
 //Package manipulation functions
 
@@ -654,7 +662,6 @@ int installer(){
 
     int mode;
 
-    system("clear");
     headerInterface();
     printf("Zenith Cube Sat v.1.0 installer ... \n");
     printf("Press: \n1 - to install CubeSat version;\n2 - to install Base version;\n3 - to install both;\n");
@@ -743,14 +750,6 @@ int livefeed_tx(char *FILE_NAME){
 
 
 //Base interface functions
-
-int headerInterface(){
-    system("cls");
-    printf("=========================================================================\n");
-    printf("=                          CubeSat v1 - ZenSat                          =\n");
-    printf("=========================================================================\n");
-    return 0;
-}
 
 int interfaceOperator(){
 
