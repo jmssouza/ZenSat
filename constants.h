@@ -1,3 +1,11 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * ZenSat v1.0 - CubeSat                                                           *
+ * Authors: João Matheus Siqueira Souza      (jmssouza)                            *
+ *          Orlando Wozniak de Lima Nogueira (orlandowzk97)                        *
+ *          Vinicius Eiji Sasaki             (sasakivinicius)                      *
+ * São Carlos School of Engineering - University of São Paulo                      *
+ * First semester - 2018                                                           *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #ifndef CODE_CONSTANTS_H
 #define CODE_CONSTANTS_H
@@ -6,6 +14,7 @@
     #define PACK_SIZE  255
     #define BLOCK_SIZE 248
     #define PASSWORD   0000
+    #define TIME_SIZE  21
     //SETAR ENDEREÇOS DOS INAS
 
 //Files names
@@ -24,8 +33,10 @@
     #define HEALTH_NUMBER   "health_num.dat"
     #define PS_FILE         "ps_file.dat"
     #define PS_NUMBER       "ps_num.dat"
-    #define ADC_FILE        "adc_file.dat"
-    #define ADC_NUMBER      "adc_num.dat"
+    #define ADC_TX_FILE     "adc_tx_file.dat"
+    #define ADC_TX_NUMBER   "adc_tx_num.dat"
+    #define ADC_RX_FILE     "adc_rx_file.dat"
+    #define ADC_RX_NUMBER   "adc_rx_num.dat"
     #define CV_FILE         "cv_file.dat"
     #define CV_NUMBER       "cv_num.dat"
     #define PICTURE_NAME    "zenith.jpg"
@@ -47,8 +58,10 @@
     #define HEALTH_NUMBER_CP   "health_num_cp.dat"
     #define PS_FILE_CP         "ps_file_cp.dat"
     #define PS_NUMBER_CP       "ps_num_cp.dat"
-    #define ADC_FILE_CP        "adc_file_cp.dat"
-    #define ADC_NUMBER_CP      "adc_num_cp.dat"
+    #define ADC_TX_FILE_CP     "adc_tx_file_cp.dat"
+    #define ADC_TX_NUMBER_CP   "adc_tx_num_cp.dat"
+    #define ADC_RX_FILE_CP     "adc_rx_file_cp.dat"
+    #define ADC_RX_NUMBER_CP   "adc_rx_num_cp.dat"
     #define CV_FILE_CP         "cv_file_cp.dat"
     #define CV_NUMBER_CP       "cv_num_cp.dat"
     #define PICTURE_NAME_CP    "zenith_cp.jpg"

@@ -1,6 +1,14 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * ZenSat v1.0 - CubeSat                                                           *
+ * Authors: João Matheus Siqueira Souza      (jmssouza)                            *
+ *          Orlando Wozniak de Lima Nogueira (orlandowzk97)                        *
+ *          Vinicius Eiji Sasaki             (sasakivinicius)                      *
+ * São Carlos School of Engineering - University of São Paulo                      *
+ * First semester - 2018                                                           *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
 #ifndef CODE_ZENITH_H
 #define CODE_ZENITH_H
-
 
     //Libraries are declared here
         #include <stdio.h>
@@ -15,7 +23,6 @@
         #include "constants.h"
         #include "zenith.c"
 
-
     //Functions body are declared here
         //Files manipulation functions
             int valueGetter(char *file_name, int *value);
@@ -29,6 +36,7 @@
             void ftoa(float n, char *res, int afterpoint);
             int correctValue(int *values);
             int headerInterface();
+            void getDate(char *time);
         //Package manipulation functions
             int blockBuilder(char *block, int operating_mode, int whoami, int aux);
             int packageCreator(char *pack_num_file, char *pack_cycle_file, char *block, char *message);
@@ -69,6 +77,5 @@
             int createZenithFiles();
             int compileCodes(int mode);
             int installer();
-
 
 #endif //CODE_ZENITH_H

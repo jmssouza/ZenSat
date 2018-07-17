@@ -12,6 +12,7 @@
 //Files manipulation functions
 
 int valueGetter(char *file_name, int *value){
+
     FILE *file;
 
     file = fopen(file_name, "r");
@@ -172,59 +173,101 @@ int headerInterface(){
     return 0;
 }
 
+void getDate(char *time){
+    time[0] = '\0';
+    strcat(time,__DATE__);
+    strcat(time, " ");
+    strcat(time,__TIME__);
+}
+
 
 //Package manipulation functions
 
 int blockBuilder(char *block, int operating_mode, int whoami, int aux){
 
     int i = 0;
+    char cubesat[11] = "ZenSat-V.1";
+    char base[11]    = "BaseZenSat";
+    char time[TIME_SIZE];
 
     for (i=0;i<BLOCK_SIZE;i++){ block[i] = 0; }
 
     switch (operating_mode){
+        case 1 : { // Mission 1 - Simple telemetry service
+            if (whoami == 0) { printf("Whoami did not implemented yet!\n"); }
+            else if (whoami == 1){ //ZenSat block builder
 
-        case 0 : {
-            if (whoami == 1){
-                block = (char*)"I'mStillAlive";
+                int ps_block_number = 0;
+                int adc_block_number = 0;
+                char ps_data[81];
+                char adc_data[56];
+
+                //FAZER LEITURA DOS ARQUIVOS MONTADOS PELOS SISTEMAS PS E ADC PARA ATUALIZAR ARQUIVOS
+                valueGetter(PS_NUMBER, &ps_block_number);
+                readMessage(PS_FILE, ps_data, ps_block_number, 0);
+                valueGetter(ADC_RX_NUMBER, &adc_block_number);
+                readMessage(ADC_RX_FILE, adc_data, adc_block_number, 0);
+                getDate(time);
+
+                strcat(block, cubesat);
+                strcat(block, ps_data);
+                strcat(block, adc_data);
+                strcat(block, time);
+                //FALTA COISA
+                block[BLOCK_SIZE] = '\0';
             }
             else { printf("whoami incorrect. \n"); }
             break;
         }
-        case 1 : { // Mission 1
-            if (whoami == 0){//Base code
-                block[0] = 'Z';
-                block[1] = 'e';
-                block[2] = 'n';
-                block[3] = 'S';
-                block[4] = 'a';
-                block[5] = 't';
-                block[6] = '\0';
-            }
-            else if (whoami == 1){//ZenSat code
+        case 2 : { //Mission 2 - Power supply checking
+            if (whoami == 0) { printf("Whoami did not implemented yet!\n"); }
+            else if (whoami == 1){ //ZenSat block builder
+                int ps_block_number = 0;
+                char ps_data[81];
 
+                //FAZER LEITURA DO ARQUIVO MONTADO PELO SISTEMA DE PS PARA ATUALIZAR ARQUIVOS
+                valueGetter(PS_NUMBER, &ps_block_number);
+                readMessage(PS_FILE, ps_data, ps_block_number, 0);
+                getDate(time);
+
+                strcat(block, cubesat);
+                strcat(block, ps_data);
+                //Falta adicionar coisas
+                strcat(block, time);
+                block[BLOCK_SIZE] = '\0';
             }
-            else{ printf("whoami incorrect. \n"); }
+            else { printf("whoami incorrect. \n"); }
             break;
         }
-        case 2 : {
+        case 3 : { //Mission 3 - ADC stabilization
             break;
         }
-        case 3 : { break; }
-        case 4 : { break; }
-        case 5 : { break; }
-        case 6 : {
+        case 4 : { //Mission 4 - Horizon determination
+            break;
+        }
+        case 5 : {
+            break; //Mission 5 - Pointing
+        }
+        case 6 : { //Mission 6 - Send picture
+            //Mandar o tamanho da foto que é desejado
             readMessage(PICTURE_NAME, block, aux, BLOCK_SIZE, 0);
             break;
         }
-        case 7 : { break; }
-        case 8 : { break; }
+        case 7 : {
+            break;
+        }
+        case 8 : {
+            break;
+        }
         case 9 : { //Mission failed once or twice
             break;
         }
         case 10 : { //Mission failed three times
             break;
         }
-        default:{ return 0; }
+        default: {
+            return 0;
+        }
     }
     return 1;
 }
@@ -402,8 +445,8 @@ int createBackup(){
     system("cp " HEALTH_NUMBER   " "  HEALTH_NUMBER_CP   );
     system("cp " PS_FILE         " "  PS_FILE_CP         );
     system("cp " PS_NUMBER       " "  PS_NUMBER_CP       );
-    system("cp " ADC_FILE        " "  ADC_FILE_CP        );
-    system("cp " ADC_NUMBER      " "  ADC_NUMBER_CP      );
+    //system("cp " ADC_FILE        " "  ADC_FILE_CP        );
+    //system("cp " ADC_NUMBER      " "  ADC_NUMBER_CP      );
     system("cp " CV_FILE         " "  CV_FILE_CP         );
     system("cp " CV_NUMBER       " "  CV_NUMBER_CP       );
 
@@ -427,8 +470,8 @@ int recoveryFiles(){
     system("cp " HEALTH_NUMBER_CP   " "  HEALTH_NUMBER   );
     system("cp " PS_FILE_CP         " "  PS_FILE         );
     system("cp " PS_NUMBER_CP       " "  PS_NUMBER       );
-    system("cp " ADC_FILE_CP        " "  ADC_FILE        );
-    system("cp " ADC_NUMBER_CP      " "  ADC_NUMBER      );
+    //system("cp " ADC_FILE_CP        " "  ADC_FILE        );
+    //system("cp " ADC_NUMBER_CP      " "  ADC_NUMBER      );
     system("cp " CV_FILE_CP         " "  CV_FILE         );
     system("cp " CV_NUMBER_CP       " "  CV_NUMBER       );
 
@@ -637,6 +680,11 @@ int sendSimpleMessage(char *block, int op_mode, int whoami, int aux){
     }
 }
 
+int powerSupply(){
+
+    return 0;
+}
+
 
 //CubeSat missions functions
 
@@ -664,7 +712,7 @@ int standardState(){
                 loop_control = 1;
             }
             else{
-                printf("Waiting for new packages...\n");
+                printf("Package corrupted. Waiting for new packages...\n");
                 counter = 0;
                 delay(1000000);
                 system("clear");
@@ -673,8 +721,9 @@ int standardState(){
         }
         else if (check_received == 0) {
             counter++;
-            if (counter == 15) {
+            if (counter == 10) {
                 counter = 0;
+                //REQUISITAR ATUALIZAÇÂO DOS ARQUIVOS DE SISTEMA (ADC E PS)
                 sendSimpleMessage(block, 0, 1, 0);
                 system("clear");
                 printf("Operating mode 0 - Standard mode\n");
@@ -860,50 +909,46 @@ int changeOperatingMode(){
     scanf("%d", &op);
 
     switch (op) {
-        case 1: {
+        case 1: { //Mode 1 - Simple telemetry service
 
             sendSimpleMessage(block,op,0,0);
-            readMessage(NEW_TM, package, 0, PACK_SIZE, 0);
-            printf("\n\n\n%s", package);
-            //displayData(package);
-            //CRIAR PACOTE DE MUDANÇA DE MODE COM INFO NECESSÁRIA
             //ESPERAR POR PACOTE DE INFO
             //PRINTAR INFO
             //displayData(package);
             break;
         }
-        case 2: {
+        case 2: { //Mode 2 - Power supply check
             //CRIAR PACOTE DE MUDANÇA DE MODE COM INFO NECESSÁRIA
             //ESPERAR POR PACOTE DE INFO
             //PRINTAR INFO
             displayData(package);
             break;
         }
-        case 3: {
+        case 3: { //Mode 3 - Stabilization
             //CRIAR PACOTE DE MUDANÇA DE MODE COM INFO NECESSÁRIA
             //ESPERAR DE CHECAGEM E FINALIZAÇÃO
             //OU MANDAR PACOTE DE FINALIZAÇÃO?
             displayData(package);
             break;
         }
-        case 4: {
+        case 4: { //Mode 4 - Horizon determination
             //CRIAR PACOTE DE MUDANÇA DE MODE COM INFO NECESSÁRIA
             //ESPERAR POR PACOTE DE INFO
             //PRINTAR INFO
             displayData(package);
             break;
         }
-        case 5: {
+        case 5: { //Mode 5 - Pointing
             //CRIAR PACOTE DE MUDANÇA DE MODE COM INFO NECESSÁRIA
             //ESPERAR POR PACOTE DE INFO
             //PRINTAR INFO E CHECAGEM DE APONTAMENTO
             displayData(package);
             break;
         }
-        case 6: {
+        case 6: { //Mode 6 - Livefeed
             //CRIAR PACOTE DE MUDANÇA DE MODE COM INFO NECESSÁRIA
             //ESPERAR POR PACOTE DE INFO
-            displayData(package);
+            //displayData(package);
             //RECEBER FOTO
             //REMONTA-LA
             //EXIBIR FOTO
@@ -928,6 +973,7 @@ int checkZenSatState(){
     int cycles = 0;
     while(cycles < 3){
         delay(2000000);
+        scanf("%d",&cycles);
         /*
          received = read_i2c();
          if(received_i2c == 1){ DEU BOM PRINTA}
@@ -1304,7 +1350,7 @@ int createZenithFiles(){
     aux[17] = createFile(CV_FILE);
     aux[18] = createFile(CV_NUMBER);
 
-    for (i=0;i==19;i++){
+    for (i=0;i<19;i++){
         if (aux[i] == 0){
             counter ++;
         }
