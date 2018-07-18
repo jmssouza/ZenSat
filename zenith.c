@@ -708,26 +708,8 @@ int sendSimpleMessage(char *block, int op_mode, int whoami, int aux){
     int check;
     char pack[PACK_SIZE];
 
-
-    printf("Building block\n");
     blockBuilder(block, op_mode, whoami, aux);
-    printf("Block: %s\n", block);
-    delay(15000000);
     packageCreator(TM_NUMBER, TM_CYCLE, block, pack);
-    printf("Package number: %d\n", pack[0]);
-    printf("Cycle number: %d\n", pack[1]);
-    printf("Op number: %d\n", pack[2]);
-    printf("Pack: ");
-    printf("%d%d%d", pack[0],pack[1],pack[2]);
-    for (i=0;i<123;i++){
-        printf("%c", pack[i]);
-    }
-    printf("%d%d", pack[123],pack[124]);
-    for (i=125;i<252;i++){
-        printf("%c", pack[i]);
-    }
-    printf("%d%d", pack[253], pack[254] );
-    delay(15000000);
     check = writeMessage(NEW_TM, pack, 0, PACK_SIZE, 0);
     //check = write_i2c(NEW_TM, 0, 1, adr, chanel);
     if (check == 1){
@@ -1274,14 +1256,14 @@ int powerSupplySimulator(){
 
     values[0] = '/0';
 
-    //GETTING DATA FROM INAS
+    //GETTING DATA FROM INAS - ORLANDIN IMPLEMENTA ASSIM MEU QUERIDO
     for(i=0;i<8;i++){
         printf("Entry tension from ina %d: ", i +1);
         scanf("%f", &ina_values[i][0]);
         printf("\nEntry current from ina %d: ", i +1);
         scanf("%f", &ina_values[i][1]);
         printf("\n");
-    }
+    }//APAGAR ESSE "FOR" DEPOIS, USEI PARA TESTAR
 
     //PUT DATA INTO FILE
     for(i=0;i<8;i++){
@@ -1292,8 +1274,6 @@ int powerSupplySimulator(){
         tenBlock(aux1);
         strcat(values,aux1);
     }
-    printf("\n\n PS pack: %s \n\n", values);
-    delay(15000000);
     valueGetter(PS_NUMBER, &i);
     writeMessage(PS_FILE, values,i+1, PS_SIZE, 0);
     valueSetter(PS_NUMBER, i+1);
@@ -1462,7 +1442,7 @@ int createZenithFiles(){
     }
 
     if   (counter>0) { printf("\n%d files cannot be created", counter); return 1;}
-    else { printf("\nFiles successfully created");                      return 0;}
+    else { printf("\nFiles successfully created\n");                    return 0;}
 }
 
 int compileCodes(int mode){
