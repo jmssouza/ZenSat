@@ -1421,7 +1421,7 @@ int createZenithFiles(){
 
     int i = 0;
     int counter;
-    int aux[21];
+    int aux[19];
 
     aux[ 0] = createFile(CHECK_POWERED);
     aux[ 1] = createFile(NEW_TM);
@@ -1434,19 +1434,17 @@ int createZenithFiles(){
     aux[ 8] = createFile(TC_CYCLE);
     aux[ 9] = createFile(MISSED_PACKAGES);
     aux[10] = createFile(MODE_FILE);
-    aux[11] = createFile(HEALTH_FILE);
-    aux[12] = createFile(HEALTH_NUMBER);
-    aux[13] = createFile(PS_FILE);
-    aux[14] = createFile(PS_NUMBER);
-    aux[15] = createFile(ADC_TX_FILE);
-    aux[16] = createFile(ADC_TX_NUMBER);
-    aux[17] = createFile(ADC_RX_FILE);
-    aux[18] = createFile(ADC_RX_NUMBER);
-    aux[19] = createFile(FILE_SLAVE);
-    aux[20] = createFile(FILE_MASTER
+    aux[11] = createFile(PS_FILE);
+    aux[12] = createFile(PS_NUMBER);
+    aux[13] = createFile(ADC_TX_FILE);
+    aux[14] = createFile(ADC_TX_NUMBER);
+    aux[15] = createFile(ADC_RX_FILE);
+    aux[16] = createFile(ADC_RX_NUMBER);
+    aux[17] = createFile(FILE_SLAVE);
+    aux[18] = createFile(FILE_MASTER);
 
 
-    for (i=0;i<21;i++){
+    for (i=0;i<19;i++){
         if (aux[i] == 0){
             counter ++;
         }
