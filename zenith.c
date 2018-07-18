@@ -205,7 +205,7 @@ void getDate(char *time){
 int blockBuilder(char *block, int operating_mode, int whoami, int aux){
 
     int i = 0;
-    char cubesat[11]    = "ZenSat-V.1";
+    char cubesat[11]    = "ZenSatEESC";
     char base[11]       = "BaseZenSat";
     char zenith_eesc[3] = "ZE";
     char time[TIME_SIZE];
@@ -222,7 +222,6 @@ int blockBuilder(char *block, int operating_mode, int whoami, int aux){
                 char ps_data[81];
                 char adc_data[56];
 
-                //FAZER LEITURA DOS ARQUIVOS MONTADOS PELOS SISTEMAS PS E ADC PARA ATUALIZAR ARQUIVOS
                 valueGetter(PS_NUMBER, &ps_block_number);
                 readMessage(PS_FILE, ps_data, ps_block_number, PS_SIZE, 0);
                 valueGetter(ADC_RX_NUMBER, &adc_block_number);
@@ -243,20 +242,20 @@ int blockBuilder(char *block, int operating_mode, int whoami, int aux){
             if (whoami == 0) { printf("Whoami did not implemented yet!\n"); }
             else if (whoami == 1){ //ZenSat block builder
                 char ps_data[161];
-
-                //APAGAR DEPOIS DO TESTE
                 char zeros[56];
                 int i = 0;
-                for (i=0;i<56;i++){zeros[i]= '0';}
+
+                for (i=0;i<55;i++){zeros[i]= '0';}
+                zeros[55] = '\0';
 
                 readMessage(PS_FILE, ps_data, aux, PS_SIZE, 0);
                 getDate(time);
 
                 strcat(block, cubesat);
                 strcat(block, ps_data);
-                strcat(block,zeros);
+                strcat(block, zeros);
                 strcat(block, time);
-                strcat(block, "ZE");
+                strcat(block,zenith_eesc);
                 block[BLOCK_SIZE] = '\0';
             }
             else { printf("Error - in 'blockBuilder', whoami passed is incorrect. \n"); }
@@ -292,6 +291,7 @@ int blockBuilder(char *block, int operating_mode, int whoami, int aux){
             break;
         }
         case 8 : {
+            printf("Error - operating mode invalid! \n");
             break;
         }
         case 9 : { //Mission failed once or twice
@@ -501,8 +501,6 @@ int recoveryFiles(){
     system("cp " TC_CYCLE_CP        " "  TC_CYCLE        );
     system("cp " MISSED_PACKAGES_CP " "  MISSED_PACKAGES );
     system("cp " MODE_FILE_CP       " "  MODE_FILE       );
-    system("cp " HEALTH_FILE_CP     " "  HEALTH_FILE     );
-    system("cp " HEALTH_NUMBER_CP   " "  HEALTH_NUMBER   );
     system("cp " PS_FILE_CP         " "  PS_FILE         );
     system("cp " PS_NUMBER_CP       " "  PS_NUMBER       );
     system("cp " ADC_TX_FILE_CP     " "  ADC_TX_FILE     );
@@ -529,8 +527,10 @@ int initializingCubeSat(int check){
         valueSetter(TC_CYCLE       , 0);
         valueSetter(MISSED_PACKAGES, 0);
         valueSetter(PS_NUMBER      , 0);
-        //valueSetter(ADC_NUMBER     , 0);
-        //valueSetter(CV_NUMBER      , 0);
+        valueSetter(ADC_TX_NUMBER  , 0);
+        valueSetter(ADC_RX_NUMBER  , 0);
+        createBackup();
+
     }
     else if (check == 1){
         printf("CubeSat is not initializing for the first time...\n");
@@ -539,6 +539,7 @@ int initializingCubeSat(int check){
         recoveryFiles();
         printf("Recovering system...\n");
         delay(3000000);
+        createBackup();
         printf("System recovered.\n");
     }
     else{
@@ -704,21 +705,30 @@ int read_i2c(char *file_name, int position, int addr,int chan){
 
 int sendSimpleMessage(char *block, int op_mode, int whoami, int aux){
 
-    int check = 1;
+    int check;
     char pack[PACK_SIZE];
 
 
     printf("Building block\n");
     blockBuilder(block, op_mode, whoami, aux);
     printf("Block: %s\n", block);
-    delay(15000);
+    delay(15000000);
     packageCreator(TM_NUMBER, TM_CYCLE, block, pack);
     printf("Package number: %d\n", pack[0]);
     printf("Cycle number: %d\n", pack[1]);
     printf("Op number: %d\n", pack[2]);
-    printf("Pack: %s\n", pack);
-    delay(15000);
-    writeMessage(NEW_TM, pack, 0, PACK_SIZE, 0);
+    printf("Pack: ");
+    printf("%d%d%d", pack[0],pack[1],pack[2]);
+    for (i=0;i<123;i++){
+        printf("%c", pack[i]);
+    }
+    printf("%d%d", pack[123],pack[124]);
+    for (i=125;i<252;i++){
+        printf("%c", pack[i]);
+    }
+    printf("%d%d", pack[253], pack[254] );
+    delay(15000000);
+    check = writeMessage(NEW_TM, pack, 0, PACK_SIZE, 0);
     //check = write_i2c(NEW_TM, 0, 1, adr, chanel);
     if (check == 1){
         return 1;
@@ -746,8 +756,9 @@ int standardState(){
 
     system("clear");
     printf("Operating mode 0 - Standard mode\n");
+    //IMPLEMENTAR MUDANÇA NA QuaNTIDADE DE COUNTER
     while (loop_control == 0) {
-        delay(2000); //Change
+        delay(2000000); //Change
         printf("Checking microcontroller for new commands - Attempt: %d; \n", counter + 1);
         //temp = read_i2c(NEW_TC); //PASSAR ARGS
 
@@ -760,13 +771,13 @@ int standardState(){
             check_package = packageAnalyzer();
             if (check_package == 1){
                 printf("System seted. \nInitializing new actions.\n");
-                delay(800);
+                delay(800000);
                 loop_control = 1;
             }
             else{
                 printf("Package corrupted. Waiting for new packages...\n");
                 counter = 0;
-                delay(1000);
+                delay(1000000);
                 system("clear");
                 printf("Operating mode 0 - Standard mode\n");
             }
@@ -1460,7 +1471,7 @@ int compileCodes(int mode){
         printf("Compiling cube.c file... \n");
         delay(600000);
         system("gcc cube.c -o cube -lm");
-        printf("File cube.c was already compiled.");
+        printf("File cube.c was already compiled.\n");
         delay(600000);
     }
     else if (mode == 2){
@@ -1474,7 +1485,7 @@ int compileCodes(int mode){
         printf("Compiling cube.c file... \n");
         delay(600000);
         system("gcc cube.c -o cube -lm");
-        printf("File cube.c was already compiled.");
+        printf("File cube.c was already compiled.\n");
         delay(600000);
         printf("Compiling base.c file... \n");
         delay(600000);
@@ -1483,7 +1494,7 @@ int compileCodes(int mode){
         delay(600000);
     }
     else {
-        printf("This mode of compilation is not valid");
+        printf("This mode of compilation is not valid\n");
     }
     return 0;
 }
@@ -1502,7 +1513,7 @@ int installer(){
     printf("Compiling files... \n");
     compileCodes(mode);
     delay(1000000);
-    printf("zenith.h is already installed!");
+    printf("zenith.h is already installed!\n\n");
     delay(2000000);
 
     return 0;
