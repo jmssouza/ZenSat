@@ -15,7 +15,13 @@
     #define BLOCK_SIZE 248
     #define PASSWORD   0000
     #define TIME_SIZE  21
+    #define PS_SIZE    161
+    #define ADC_SIZE   61
     //SETAR ENDEREÇOS DOS INAS
+
+
+    #define COD_VISAO       "VisaoCubeSat.py"
+    #define PICTURE_NAME    "zenith.jpg"
 
 //Files names
     #define CHECK_POWERED   "check_powered.dat"
@@ -29,17 +35,15 @@
     #define TC_CYCLE        "tc_cycle.dat"
     #define MISSED_PACKAGES "missed_packets.dat"
     #define MODE_FILE       "op_mode.dat"
-    #define HEALTH_FILE     "health_file.dat"
-    #define HEALTH_NUMBER   "health_num.dat"
     #define PS_FILE         "ps_file.dat"
     #define PS_NUMBER       "ps_num.dat"
     #define ADC_TX_FILE     "adc_tx_file.dat"
     #define ADC_TX_NUMBER   "adc_tx_num.dat"
     #define ADC_RX_FILE     "adc_rx_file.dat"
     #define ADC_RX_NUMBER   "adc_rx_num.dat"
-    #define CV_FILE         "cv_file.dat"
-    #define CV_NUMBER       "cv_num.dat"
-    #define PICTURE_NAME    "zenith.jpg"
+    #define FILE_SLAVE      "adc_cv_slave.dat"
+    #define FILE_MASTER     "adc_cv_master.dat"
+
 
 
 //Backup files
@@ -54,17 +58,14 @@
     #define TC_CYCLE_CP        "tc_cycle_cp.dat"
     #define MISSED_PACKAGES_CP "missed_packets_cp.dat"
     #define MODE_FILE_CP       "op_mode_cp.dat"
-    #define HEALTH_FILE_CP     "health_file_cp.dat"
-    #define HEALTH_NUMBER_CP   "health_num_cp.dat"
     #define PS_FILE_CP         "ps_file_cp.dat"
     #define PS_NUMBER_CP       "ps_num_cp.dat"
     #define ADC_TX_FILE_CP     "adc_tx_file_cp.dat"
     #define ADC_TX_NUMBER_CP   "adc_tx_num_cp.dat"
     #define ADC_RX_FILE_CP     "adc_rx_file_cp.dat"
     #define ADC_RX_NUMBER_CP   "adc_rx_num_cp.dat"
-    #define CV_FILE_CP         "cv_file_cp.dat"
-    #define CV_NUMBER_CP       "cv_num_cp.dat"
-    #define PICTURE_NAME_CP    "zenith_cp.jpg"
+    #define FILE_SLAVE_CP      "adc_cv_slave_cp.dat"
+    #define FILE_MASTER_CP     "adc_cv_master_cp.dat"
 
 
 #endif //CODE_CONSTANTS_H

@@ -165,6 +165,25 @@ int correctValue(int *values){
     }
 }
 
+void tenBlock(char *str){
+
+    int size;
+    int i = 0;
+
+    size = strlen(str);
+
+    if(size>=9){
+        str[9] = ';';
+        str[10] = '\0';
+    }
+    else if(size<9){
+        for(i = 0; i< size; i++){ str[8-i] = str[size - (i+1)]; }
+        for(i = 0; i< 9 - size; i++){ str[i] = '0'; }
+        str[9]=';';
+        str[10] = '\0';
+    }
+}
+
 int headerInterface(){
     system("clear");
     printf("=========================================================================\n");
@@ -186,8 +205,9 @@ void getDate(char *time){
 int blockBuilder(char *block, int operating_mode, int whoami, int aux){
 
     int i = 0;
-    char cubesat[11] = "ZenSat-V.1";
-    char base[11]    = "BaseZenSat";
+    char cubesat[11]    = "ZenSat-V.1";
+    char base[11]       = "BaseZenSat";
+    char zenith_eesc[3] = "ZE";
     char time[TIME_SIZE];
 
     for (i=0;i<BLOCK_SIZE;i++){ block[i] = 0; }
@@ -204,48 +224,60 @@ int blockBuilder(char *block, int operating_mode, int whoami, int aux){
 
                 //FAZER LEITURA DOS ARQUIVOS MONTADOS PELOS SISTEMAS PS E ADC PARA ATUALIZAR ARQUIVOS
                 valueGetter(PS_NUMBER, &ps_block_number);
-                readMessage(PS_FILE, ps_data, ps_block_number, 0);
+                readMessage(PS_FILE, ps_data, ps_block_number, PS_SIZE, 0);
                 valueGetter(ADC_RX_NUMBER, &adc_block_number);
-                readMessage(ADC_RX_FILE, adc_data, adc_block_number, 0);
+                readMessage(ADC_RX_FILE, adc_data, adc_block_number, ADC_SIZE, 0);
                 getDate(time);
 
                 strcat(block, cubesat);
                 strcat(block, ps_data);
                 strcat(block, adc_data);
                 strcat(block, time);
-                //FALTA COISA
+                strcat(block, zenith_eesc);
                 block[BLOCK_SIZE] = '\0';
             }
-            else { printf("whoami incorrect. \n"); }
+            else { printf("Error - in 'blockBuilder', whoami passed is incorrect. \n"); }
             break;
         }
         case 2 : { //Mission 2 - Power supply checking
             if (whoami == 0) { printf("Whoami did not implemented yet!\n"); }
             else if (whoami == 1){ //ZenSat block builder
-                int ps_block_number = 0;
-                char ps_data[81];
+                char ps_data[161];
 
-                //FAZER LEITURA DO ARQUIVO MONTADO PELO SISTEMA DE PS PARA ATUALIZAR ARQUIVOS
-                valueGetter(PS_NUMBER, &ps_block_number);
-                readMessage(PS_FILE, ps_data, ps_block_number, 0);
+                //APAGAR DEPOIS DO TESTE
+                char zeros[56];
+                int i = 0;
+                for (i=0;i<56;i++){zeros[i]= '0';}
+
+                readMessage(PS_FILE, ps_data, aux, PS_SIZE, 0);
                 getDate(time);
 
                 strcat(block, cubesat);
                 strcat(block, ps_data);
-                //Falta adicionar coisas
+                strcat(block,zeros);
                 strcat(block, time);
+                strcat(block, "ZE");
                 block[BLOCK_SIZE] = '\0';
             }
-            else { printf("whoami incorrect. \n"); }
+            else { printf("Error - in 'blockBuilder', whoami passed is incorrect. \n"); }
             break;
         }
         case 3 : { //Mission 3 - ADC stabilization
+            if (whoami == 0){}
+            else if (whoami == 1){}
+            else{ printf("Error - in 'blockBuilder', whoami passed is incorrect. \n"); }
             break;
         }
         case 4 : { //Mission 4 - Horizon determination
+            if (whoami == 0){}
+            else if (whoami == 1){}
+            else{ printf("Error - in 'blockBuilder', whoami passed is incorrect. \n"); }
             break;
         }
         case 5 : {
+            if (whoami == 0){}
+            else if (whoami == 1){}
+            else{ printf("Error - in 'blockBuilder', whoami passed is incorrect. \n"); }
             break; //Mission 5 - Pointing
         }
         case 6 : { //Mission 6 - Send picture
@@ -254,6 +286,9 @@ int blockBuilder(char *block, int operating_mode, int whoami, int aux){
             break;
         }
         case 7 : {
+            if (whoami == 0){}
+            else if (whoami == 1){}
+            else{ printf("Error - in 'blockBuilder', whoami passed is incorrect. \n"); }
             break;
         }
         case 8 : {
@@ -441,14 +476,14 @@ int createBackup(){
     system("cp " TC_CYCLE        " "  TC_CYCLE_CP        );
     system("cp " MISSED_PACKAGES " "  MISSED_PACKAGES_CP );
     system("cp " MODE_FILE       " "  MODE_FILE_CP       );
-    system("cp " HEALTH_FILE     " "  HEALTH_FILE_CP     );
-    system("cp " HEALTH_NUMBER   " "  HEALTH_NUMBER_CP   );
     system("cp " PS_FILE         " "  PS_FILE_CP         );
     system("cp " PS_NUMBER       " "  PS_NUMBER_CP       );
-    //system("cp " ADC_FILE        " "  ADC_FILE_CP        );
-    //system("cp " ADC_NUMBER      " "  ADC_NUMBER_CP      );
-    system("cp " CV_FILE         " "  CV_FILE_CP         );
-    system("cp " CV_NUMBER       " "  CV_NUMBER_CP       );
+    system("cp " ADC_TX_FILE     " "  ADC_TX_FILE_CP     );
+    system("cp " ADC_RX_NUMBER   " "  ADC_TX_NUMBER_CP   );
+    system("cp " ADC_RX_FILE     " "  ADC_RX_FILE_CP     );
+    system("cp " ADC_RX_NUMBER   " "  ADC_RX_NUMBER_CP   );
+    system("cp " FILE_SLAVE      " "  FILE_SLAVE_CP      );
+    system("cp " FILE_MASTER     " "  FILE_MASTER_CP     );
 
     return 0;
 }
@@ -470,10 +505,12 @@ int recoveryFiles(){
     system("cp " HEALTH_NUMBER_CP   " "  HEALTH_NUMBER   );
     system("cp " PS_FILE_CP         " "  PS_FILE         );
     system("cp " PS_NUMBER_CP       " "  PS_NUMBER       );
-    //system("cp " ADC_FILE_CP        " "  ADC_FILE        );
-    //system("cp " ADC_NUMBER_CP      " "  ADC_NUMBER      );
-    system("cp " CV_FILE_CP         " "  CV_FILE         );
-    system("cp " CV_NUMBER_CP       " "  CV_NUMBER       );
+    system("cp " ADC_TX_FILE_CP     " "  ADC_TX_FILE     );
+    system("cp " ADC_RX_NUMBER_CP   " "  ADC_TX_NUMBER   );
+    system("cp " ADC_RX_FILE_CP     " "  ADC_RX_FILE     );
+    system("cp " ADC_RX_NUMBER_CP   " "  ADC_RX_NUMBER   );
+    system("cp " FILE_SLAVE_CP      " "  FILE_SLAVE      );
+    system("cp " FILE_MASTER_CP     " "  FILE_MASTER     );
 
     return 0;
 }
@@ -485,15 +522,15 @@ int initializingCubeSat(int check){
         printf("CubeSat is initilizing for the first time... \n");
 
         valueSetter(CHECK_POWERED  , 1);
+        valueSetter(MODE_FILE      , 0);
         valueSetter(TM_NUMBER      , 0);
         valueSetter(TM_CYCLE       , 0);
         valueSetter(TC_NUMBER      , 0);
         valueSetter(TC_CYCLE       , 0);
         valueSetter(MISSED_PACKAGES, 0);
-        valueSetter(HEALTH_NUMBER  , 0);
         valueSetter(PS_NUMBER      , 0);
-        valueSetter(ADC_NUMBER     , 0);
-        valueSetter(CV_NUMBER      , 0);
+        //valueSetter(ADC_NUMBER     , 0);
+        //valueSetter(CV_NUMBER      , 0);
     }
     else if (check == 1){
         printf("CubeSat is not initializing for the first time...\n");
@@ -509,6 +546,8 @@ int initializingCubeSat(int check){
         delay(2000000);
         return 0;
     }
+    //Implementar inicialização da outra rasp
+
     return 1;
 }
 
@@ -665,11 +704,20 @@ int read_i2c(char *file_name, int position, int addr,int chan){
 
 int sendSimpleMessage(char *block, int op_mode, int whoami, int aux){
 
-    int check;
+    int check = 1;
     char pack[PACK_SIZE];
 
+
+    printf("Building block\n");
     blockBuilder(block, op_mode, whoami, aux);
+    printf("Block: %s\n", block);
+    delay(15000);
     packageCreator(TM_NUMBER, TM_CYCLE, block, pack);
+    printf("Package number: %d\n", pack[0]);
+    printf("Cycle number: %d\n", pack[1]);
+    printf("Op number: %d\n", pack[2]);
+    printf("Pack: %s\n", pack);
+    delay(15000);
     writeMessage(NEW_TM, pack, 0, PACK_SIZE, 0);
     //check = write_i2c(NEW_TM, 0, 1, adr, chanel);
     if (check == 1){
@@ -690,7 +738,7 @@ int powerSupply(){
 
 int standardState(){
 
-    int loop_control;
+    int loop_control = 0;
     int check_received;
     int check_package;
     int counter = 0;
@@ -699,22 +747,26 @@ int standardState(){
     system("clear");
     printf("Operating mode 0 - Standard mode\n");
     while (loop_control == 0) {
-        delay(2000000);
+        delay(2000); //Change
         printf("Checking microcontroller for new commands - Attempt: %d; \n", counter + 1);
         //temp = read_i2c(NEW_TC); //PASSAR ARGS
+
+        //Apenas  para teste!!!
+        valueGetter("received.dat", &check_received);
+
         if (check_received == 1) {
             printf("Message received!\n");
             printf("Analyzing message and setting the system...\n");
             check_package = packageAnalyzer();
             if (check_package == 1){
                 printf("System seted. \nInitializing new actions.\n");
-                delay(800000);
+                delay(800);
                 loop_control = 1;
             }
             else{
                 printf("Package corrupted. Waiting for new packages...\n");
                 counter = 0;
-                delay(1000000);
+                delay(1000);
                 system("clear");
                 printf("Operating mode 0 - Standard mode\n");
             }
@@ -766,18 +818,21 @@ int powerSupplyCheck(){
 
     int block_position;
     char block[BLOCK_SIZE];
-    int check = 0;
+    int check;
 
     system("clear");
     printf("Operating mode 2 - Checking current and voltage\n");
     printf("Requiring Power Supply System informations ...\n");
     //REQUERER INFORMAÇÕES DO PS, ESTAS DEVEM SER SALVAS EM SEUS RESPECTIVOS ARQUIVOS
     //MOSTRAR EM TELA ESSAS INFORMAÇÕES (para checagem de sistema, depois deve ser comentado)
+    powerSupplySimulator();
 
 
     printf("Building and sending the package...\n");
-    valueGetter(PS_NUM, &block_position);
+    valueGetter(PS_NUMBER, &block_position);
     check = sendSimpleMessage(block, 2, 1, block_position);
+
+    delay(7000);
 
     if (check == 1){
         printf("Package sended.\n Mission 2 - completed.");
@@ -793,6 +848,7 @@ int oneAxisStabilization(){
 
     int block_position;
     char block[BLOCK_SIZE];
+    int check;
 
     system("clear");
     printf("Operating mode 3 - ZenSat stabilization\n");
@@ -805,7 +861,7 @@ int oneAxisStabilization(){
     //MOSTRAR EM TELA ESSAS INFORMAÇÕES (para checagem de sistema, depois deve ser comentado)
 
     printf("Building and sending the package...\n");
-    valueGetter(ADC_NUM, &block_position);
+    //valueGetter(ADC_NUM, &block_position);
     check = sendSimpleMessage(block, 3, 1, block_position );
     //ESSE PROVAVELMENTE N SERA O CHECK QUE DIRA SE A MISSÃO FOI CONCLUÍDA OU NÃO
     if (check==1){
@@ -1117,6 +1173,8 @@ int CubeSat(){
                     if (mission_counter == 3){
                         mission_counter = 0;
                         sendSimpleMessage(block, 10, 1, operating_mode);
+                        operating_mode = 0;
+                        valueSetter(MODE_FILE, operating_mode);
                     }
                 }break;
             }
@@ -1166,7 +1224,7 @@ int CubeSat(){
                 break;
             }
         }
-        createBackup();
+        //createBackup();
     }
 }
 
@@ -1195,6 +1253,42 @@ int Base(){
 
 
 //Test function
+
+int powerSupplySimulator(){
+
+    float ina_values[8][2];
+    char aux1 [11];
+    char values [PS_SIZE];
+    int i;
+
+    values[0] = '/0';
+
+    //GETTING DATA FROM INAS
+    for(i=0;i<8;i++){
+        printf("Entry tension from ina %d: ", i +1);
+        scanf("%f", &ina_values[i][0]);
+        printf("\nEntry current from ina %d: ", i +1);
+        scanf("%f", &ina_values[i][1]);
+        printf("\n");
+    }
+
+    //PUT DATA INTO FILE
+    for(i=0;i<8;i++){
+        ftoa(ina_values[i][0], aux1, 5);
+        tenBlock(aux1);
+        strcat(values,aux1);
+        ftoa(ina_values[i][1], aux1, 5);
+        tenBlock(aux1);
+        strcat(values,aux1);
+    }
+    printf("\n\n PS pack: %s \n\n", values);
+    delay(15000000);
+    valueGetter(PS_NUMBER, &i);
+    writeMessage(PS_FILE, values,i+1, PS_SIZE, 0);
+    valueSetter(PS_NUMBER, i+1);
+
+    return 0;
+}
 
 int sendlandeira(char* package){
     FILE *fp = fopen("partidocomunista", "ab");
@@ -1239,7 +1333,7 @@ int livefeed_tx(char *FILE_NAME){
 
 
     for(i = 0; i < (packages_num - 1); i++){
-        blockBuilder(block, 6, i);
+        //blockBuilder(block, 6, i);
         packageCreator(TM_NUMBER, TM_CYCLE, block, package);
         sendlandeira(block);
     }
@@ -1280,11 +1374,10 @@ int CubeSatTest(){
         scanf ("%d", &mode);
         printf("\n Digite o num do pack - ");
         scanf ("%d", &pack);
-        printf("\n Digite a msg - ");
-        scanf("%s",msg);
+
 
         msg[0]=pack;
-        msg[1]=1;
+        msg[1]=0;
         msg[2]=mode;
 
         msg[123]=pack;
@@ -1293,7 +1386,7 @@ int CubeSatTest(){
         msg[252]=pack;
         msg[253]=mode;
 
-        writeMessage(NEW_TM, msg, 0, PACK_SIZE, 0);
+        writeMessage(NEW_TC, msg, 0, PACK_SIZE, 0);
 
         printf("\nDigite 1 para sair.\n");
         scanf ("%d", &i);
@@ -1327,8 +1420,8 @@ int createFile(char *file_name){
 int createZenithFiles(){
 
     int i = 0;
-    int counter = 0;
-    int aux[19];
+    int counter;
+    int aux[21];
 
     aux[ 0] = createFile(CHECK_POWERED);
     aux[ 1] = createFile(NEW_TM);
@@ -1345,12 +1438,15 @@ int createZenithFiles(){
     aux[12] = createFile(HEALTH_NUMBER);
     aux[13] = createFile(PS_FILE);
     aux[14] = createFile(PS_NUMBER);
-    aux[15] = createFile(ADC_FILE);
-    aux[16] = createFile(ADC_NUMBER);
-    aux[17] = createFile(CV_FILE);
-    aux[18] = createFile(CV_NUMBER);
+    aux[15] = createFile(ADC_TX_FILE);
+    aux[16] = createFile(ADC_TX_NUMBER);
+    aux[17] = createFile(ADC_RX_FILE);
+    aux[18] = createFile(ADC_RX_NUMBER);
+    aux[19] = createFile(FILE_SLAVE);
+    aux[20] = createFile(FILE_MASTER
 
-    for (i=0;i<19;i++){
+
+    for (i=0;i<21;i++){
         if (aux[i] == 0){
             counter ++;
         }
@@ -1413,21 +1509,3 @@ int installer(){
 
     return 0;
 }
-
-/*
-int PS(){
-
-    typedef struct {
-        float shuntvoltage = 0;
-        float busvoltage = 0;
-        float current_mA = 0;
-        float loadvoltage = 0;
-    } inaData;
-
-    inaData ina_1, ina_2, ina_3, ina_4, ina_5, ina_6;
-
-    //READ_INAS_VALUES;
-    //CONVERT_UNITS
-    //SAVE_IN_FILE;
-}
-*/

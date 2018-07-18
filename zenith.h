@@ -32,10 +32,11 @@
         //General purpose functions
             void delay(unsigned int micros);
             void reverse(char *str, int len);
-            int intToStr(int x, char str[], int d);
+            int  intToStr(int x, char str[], int d);
             void ftoa(float n, char *res, int afterpoint);
-            int correctValue(int *values);
-            int headerInterface();
+            int  correctValue(int *values);
+            void tenBlock(char *str);
+            int  headerInterface();
             void getDate(char *time);
         //Package manipulation functions
             int blockBuilder(char *block, int operating_mode, int whoami, int aux);
@@ -44,11 +45,13 @@
             int packageAnalyzer();
         //Initialize and check functions
             int createBackup();
+            int recoveryFiles();
             int initializingCubeSat(int check);
         //Communication functions
             //int write_i2c(char *file_name, int packet, int qt, int addr,int chan);
             //int read_i2c(char *file_name, int position, int addr,int chan);
             int sendSimpleMessage(char *block, int op_mode, int whoami, int aux);
+            int powerSupply();
         //CubeSat missions functions
             int standardState();
             int healthInfo();
@@ -56,6 +59,7 @@
             int oneAxisStabilization();
             int horizonDetermination();
             int pointing();
+            int livefeed(int mode);
         //Base interface functions
             int interfaceOperator();
             int displayData(char *package);
@@ -68,6 +72,7 @@
             int CubeSat();
             int Base();
         //Test functions
+            int powerSupplySimulator();
             int CubeSatTest();
             int sendlandeira(char* package);
             int file_size(char* FILE_NAME);
