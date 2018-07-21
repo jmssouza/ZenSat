@@ -1,0 +1,32 @@
+
+#include <wiringPiSPI.h>
+#include<time.h>
+#include <stdio.h>
+void delay(unsigned int micros){
+	clock_t goal = micros  + clock();
+	while(goal>clock());
+}
+
+
+int main()
+{int a;
+char buffer[3];
+a=wiringPiSPISetup(0, 500000);
+buffer[0] = 'o';buffer[1] = 'i';buffer[2] = 'x';
+while (1){
+delay(1000000);
+//sleep(1);
+wiringPiSPIDataRW(0, buffer, 3); // escreve 
+buffer[0] = 0;
+buffer[1] = 0;
+buffer[2] = 0;
+delay(5000);
+wiringPiSPIDataRW(0,buffer,3);// se n der muda o 3 para 1
+
+//wiringPiSPIDataRW(0, buffer, 3); // Le 3 bytes
+//wiringPiSPIDataRW(0, buffer, 3); 
+printf("recebido - %s",buffer);
+//return 0;
+}
+}
+spit
