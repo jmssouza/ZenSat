@@ -51,7 +51,8 @@
             //int write_i2c(char *file_name, int packet, int qt, int addr,int chan);
             //int read_i2c(char *file_name, int position, int addr,int chan);
             int sendSimpleMessage(char *block, int op_mode, int whoami, int aux);
-            int powerSupply();
+            int powerSupplyMaster();
+            int powerSupplySlave();
         //CubeSat missions functions
             int standardState();
             int healthInfo();
@@ -59,7 +60,8 @@
             int oneAxisStabilization();
             int horizonDetermination();
             int pointing();
-            int livefeed(int mode);
+            int livefeed();
+            int temperatureMonitor();
         //Base interface functions
             int interfaceOperator();
             int displayData(char *package);
@@ -69,7 +71,8 @@
             int changeToMasterMode();
             int shutdownZenSat();
         //Main functions
-            int CubeSat();
+            int CubeSatSlave();
+            int CubeSatMaster();
             int Base();
         //Test functions
             int powerSupplySimulator();
