@@ -280,6 +280,8 @@ int blockBuilder(char *block, int operating_mode, int whoami, int aux){
                 block[12] = 10;
             }
             else if (whoami == 1){ //ZenSat block builder
+
+                int ps_num_block = 0;
                 char ps_data[161];
                 char zeros[56];
                 int i = 0;
@@ -287,7 +289,9 @@ int blockBuilder(char *block, int operating_mode, int whoami, int aux){
                 for (i=0;i<55;i++){zeros[i]= '0';}
                 zeros[55] = '\0';
 
-                readMessage(PS_FILE, ps_data, aux, PS_SIZE, 0);
+                valueGetter(PS_NUMBER, &ps_num_block);
+
+                readMessage(PS_FILE, ps_data, ps_num_block, PS_SIZE, 0);
                 getDate(time);
 
                 strcat(block, cubesat);
@@ -621,9 +625,7 @@ int initializingCubeSat(int check){
 
 
 
-//Communication functions
-
-/*
+//General communication functions
 
 int write_i2c(char *file_name, int packet, int qt, int addr, int chan){
 
@@ -769,7 +771,71 @@ int read_i2c(char *file_name, int position, int addr, int chan){
     return 1;
 }
 
-*/
+int tx_uart (char *a, int tam){
+
+    int serial_port, i,j,aux;
+    char* senddat;
+
+    if ((serial_port = serialOpen ("/dev/ttyS0", 9600)) < 0){	//open serial port
+        fprintf (stderr, "Unable to open /dev/ttyAMA0\n");
+        return 1;
+    }
+
+    if (wiringPiSetup () == -1){					//start wiringPi setup
+        fprintf(stdout, "Unable to start wiringPi: %s\n", strerror(errno));
+        return 1;
+    }
+    j = 0;
+    while (tam>0){
+        serialPutchar(serial_port, a[j]);
+        tam--;
+        j++;
+    }
+    /*PRECISA IMPLEMENTAR O \0!
+    if (tam == 0){
+        serialPutchar(serial_port, a[])/
+    }*/
+}
+
+int rx_uart (char *dat){
+
+    int serial_port, i,aux;
+    //char dat [20];
+
+    if ((serial_port = serialOpen ("/dev/ttyS0", 9600)) < 0){	//open serial port
+        fprintf (stderr, "Unable to open /dev/ttyAMA0\n");
+        return 1;
+    }
+
+    if (wiringPiSetup () == -1){					//start wiringPi setup
+        fprintf(stdout, "Unable to start wiringPi: %s\n", strerror(errno));
+        return 1;
+    }
+
+
+    aux = 1;
+    i = 0;
+    while(aux){
+        if(serialDataAvail(serial_port)){
+            while (aux){
+                if (serialDataAvail(serial_port)){
+                    dat[i] = serialGetchar(serial_port);
+                    if (dat[i] == '\0')
+                        aux = 0;		//receive character from the serial port
+                    fflush(stdout);
+                    i++;
+                }
+            }
+            //printf("chegou %s\n", dat);
+            //i = 0;
+        }
+    }
+}
+
+
+
+
+//CubeSat communication fuctions
 
 int sendSimpleMessage(char *block, int op_mode, int whoami, int aux){
 
@@ -788,40 +854,39 @@ int sendSimpleMessage(char *block, int op_mode, int whoami, int aux){
 int powerSupplyMaster(){
 
     char ps_block[161];
-    char aux1 [11];
+    char aux1 [81];
+    char a[2] = "x";
     int i;
 
-    values[0] = '/0';
 
-    //LEITURA INAS RASP MASTER E ESCRITA ARQUIVO PS_FILE
+    //LEITURA INAS RASP MASTER E ESCRITA NO ARQUIVO PS_AUX
     system("python ina.py");
-    //AQUI É LIDO A PRIMEIRA PARTE DO QUE SERA ENVIADO SOBRE O PS
 
-    //ENVIA CARACTERE VIA UART PARA RASP SLAVE PARA LEITURA INAS RASP SLAVE
-    tx_uart('a');
+    //ENVIA CARACTERE VIA UART PARA RASP SLAVE PARA INICIAR LEITURA INAS RASP SLAVE
+    tx_uart(a,1);
 
-    //LEITURA VIA UART DADOS INA RASP SLAVE
-    rx_uart(aux1); //MUDAR TAMANHO DO VETOR
-    //AQUI É LIDO A SEGUNDA PARTE DO QUE SERA ENVIADO SOBRE O PS
+    //RECEBE VIA UART DADOS INA RASP SLAVE
+    rx_uart(aux1);
 
-    //ESCREVER NO ARQUIVO OS VALORES RESTANTES, REFERENTES A SEGUNDA PARTE DA INFO
+    //ESCRITA PS_AUX DADOS INA RASP SLAVE
+    writeMessage(PS_AUX, aux1, 1, 80, 0);
 
+    //LÊ O PS_AUX PARA PEGAR A STRING E A SALVA NO PS_FILE
     readMessage(PS_AUX, ps_block, 0, PS_SIZE, 0);
-
     valueGetter(PS_NUMBER, &i);
     writeMessage(PS_FILE, ps_block, i+1, PS_SIZE, 0);
     valueSetter(PS_NUMBER, i+1);
-
-    return 0;
 }
 
 int powerSupplySlave(){
 
-    return 0;
-}
+    char aux[81];
 
-int ADC(){
-    return 0;
+    system("python ina2.py"); //LEITURA DADOS INAS RASP SLAVE E ESCRITA NO ARQUIVO PS_AUX2
+    readMessage(PS_AUX2, aux, 0, 80, 0);	 //LEITURA DO ARQUIVO PS_AUX2
+    tx_uart(aux,80);		// ENVIO PARA A RASP MASTER OS DADOS DOS INAS DA RASP SLAVE
+
+    return 1;
 }
 
 
@@ -891,9 +956,10 @@ int healthInfo(){
     system("clear");
     printf("Operating mode 1 - Sending a simple message about Cubesat Health\n");
     printf("Requiring Power Supply System informations ...\n");
-    //REQUERER INFORMAÇÕES DO PS, ESTAS DEVEM SER SALVAS EM SEUS RESPECTIVOS ARQUIVOS
+    powerSupplyMaster();
     //MOSTRAR EM TELA ESSAS INFORMAÇÕES (para checagem de sistema, depois deve ser comentado)
     printf("Requiring ADC System informations...\n");
+
     //REQUERER INFORMAÇÕES DO ADC, ESTAS DEVEM SER SALVAS EM SEUS RESPECTIVOS ARQUIVOS
     //MOSTRAR EM TELA ESSAS INFORMAÇÕES (para checagem de sistema, depois deve ser comentado)
 
@@ -901,11 +967,11 @@ int healthInfo(){
     check = sendSimpleMessage(block, 1, 1, 0);
 
     if (check==1){
-        printf("Package sended.\n Mission 1 - completed.");
+        printf("Package sended.\nMission 1 - completed.\n");
         return 1;
     }
     else {
-        printf("The package cannot be sended.\n Mission 1 - failed.");
+        printf("The package cannot be sended.\nMission 1 - failed.\n");
         return 0;
     }
 }
@@ -914,28 +980,40 @@ int powerSupplyCheck(){
 
     int block_position;
     char block[BLOCK_SIZE];
+    char tc_pack[PACK_SIZE];
     int check;
+    int aux = 0;
+    int sample;
+    int time_delay;
+    int i=0;
+
+    readMessage(NEW_TC, tc_pack, 0, PACK_SIZE, 0);
+    sample = tc_pack[13];
+    time_delay = tc_pack[14];
+
 
     system("clear");
     printf("Operating mode 2 - Checking current and voltage\n");
     printf("Requiring Power Supply System informations ...\n");
-    //REQUERER INFORMAÇÕES DO PS, ESTAS DEVEM SER SALVAS EM SEUS RESPECTIVOS ARQUIVOS
-    //MOSTRAR EM TELA ESSAS INFORMAÇÕES (para checagem de sistema, depois deve ser comentado)
-    powerSupplySimulator();
 
+    while(i<sample) {
+        printf("\nSample: %d\n", i+1);
+        powerSupplyMaster();
 
-    printf("Building and sending the package...\n");
-    valueGetter(PS_NUMBER, &block_position);
-    check = sendSimpleMessage(block, 2, 1, block_position);
+        printf("Building and sending the package...\n");
+        valueGetter(PS_NUMBER, &block_position);
+        check = sendSimpleMessage(block, 2, 1, sample);
+        delay(1000000*time_delay);
+        i ++;
+        if(check != 1){ aux++; }
+    }
 
-    delay(7000);
-
-    if (check == 1){
-        printf("Package sended.\n Mission 2 - completed.");
+    if (aux > sample/2){
+        printf("Mission 2 - completed.\n");
         return 1;
     }
     else {
-        printf("The package cannot be sended.\n Mission 2 - failed.");
+        printf("Mission 2 - failed.\n");
         return 0;
     }
 }
@@ -1032,11 +1110,11 @@ int displayData(char *package){ ;
     operating_mode_rec[1] =  package[124];
     operating_mode_rec[2] =  package[253];
 
-    pack_number =  correctValue(pack_cycle_received);
+    pack_number =  correctValue(pack_num_received);
     op_mode     =  correctValue(operating_mode_rec);
 
     headerInterface();
-    printf("Pack number: &d;  Pack cycle: %d;  Operating mode: %d;\n", pack_number, pack_cycle, op_mode);
+    printf("Pack number: %d;  Pack cycle: %d;  Operating mode: %d;\n", pack_number, pack_cycle, op_mode);
 
     switch (op_mode){
         case 1:{
@@ -1276,6 +1354,7 @@ int changeOperatingMode(){
             break;
         }
         case 8: {
+            int counter = 0;
 
             headerInterface();
             printf("Sending minimum message...\n");
@@ -1404,6 +1483,19 @@ int shutdownZenSat(){
 //Main functions
 
 int CubeSatSlave(){
+    char status;
+    int main_loop_control = 1;
+    while(main_loop_control){
+        //LER CHAR NO UART
+        switch (status){
+            case 'a':{
+                powerSupplySlave();
+                status='0';
+                break;
+            }
+        }
+    }
+
     return 0;
 }
 

@@ -18,12 +18,7 @@
     #define PS_SIZE    161
     #define ADC_SIZE   61
 
-
-
-    #define ADD_I2C_ATMEGA  0x1 //TEM QUE ARRUMAR
-    #define ADD_I2C_ATMEGA_BASE  0x2 //TEM QUE ARRUMAR
-//SETAR ENDEREÇOS DOS INAS
-
+    #define ADD_I2C_ATMEGA  0x5E //TEM QUE ARRUMAR
 
     #define COD_VISAO       "VisaoCubeSat.py"
     #define PICTURE_NAME    "zenith.jpg"
@@ -72,7 +67,7 @@
     #define ADC_RX_NUMBER_CP   "adc_rx_num_cp.dat"
     #define FILE_SLAVE_CP      "adc_cv_slave_cp.dat"
     #define FILE_MASTER_CP     "adc_cv_master_cp.dat"
-    #define STD_LOOP_CP        "std_loop_cp.dat
+    #define STD_LOOP_CP        "std_loop_cp.dat"
     #define PS_AUX_CP          "ps_aux_cp.dat"
 
 #endif //CODE_CONSTANTS_H

@@ -15,10 +15,13 @@
         #include <stdlib.h>
         #include <math.h>
         #include <time.h>
-        //#include <unistd.h>
-        //#include <fcntl.h>
-        //#include <sys/ioctl.h>
-        //#include <linux/i2c-dev.h>
+        #include <errno.h>
+        #include <wiringPi.h>
+        #include <wiringSerial.h>
+        #include <unistd.h>
+        #include <fcntl.h>
+        #include <sys/ioctl.h>
+        #include <linux/i2c-dev.h>
         #include <string.h>
         #include "constants.h"
         #include "zenith.c"
@@ -48,8 +51,10 @@
             int recoveryFiles();
             int initializingCubeSat(int check);
         //Communication functions
-            //int write_i2c(char *file_name, int packet, int qt, int addr,int chan);
-            //int read_i2c(char *file_name, int position, int addr,int chan);
+            int write_i2c(char *file_name, int packet, int qt, int addr,int chan);
+            int read_i2c(char *file_name, int position, int addr,int chan);
+            int tx_uart (char *a, int tam);
+            int rx_uart (char *dat);
             int sendSimpleMessage(char *block, int op_mode, int whoami, int aux);
             int powerSupplyMaster();
             int powerSupplySlave();
