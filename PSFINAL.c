@@ -6,7 +6,6 @@ int powerSupplyMaster(){
     char a[2] = "x";
     int i;
 
-    values[0] = '/0';
 
     //LEITURA INAS RASP MASTER E ESCRITA NO ARQUIVO PS_AUX
     system("python ina.py");
@@ -16,19 +15,16 @@ int powerSupplyMaster(){
 
     //RECEBE VIA UART DADOS INA RASP SLAVE
     rx_uart(aux1); 
+	
     //ESCRITA PS_AUX DADOS INA RASP SLAVE
-    writeMessage(PS_AUX, aux1, 1, , 0);		
-    //ESCREVER NO ARQUIVO PS_FILE, A PARTIR DO PS_AUX 
+    writeMessage(PS_AUX, aux1, 1, 80, 0);
+	
+    //LÊ O PS_AUX PARA PEGAR A STRING E A SALVA NO PS_FILE
     readMessage(PS_AUX, ps_block, 0, PS_SIZE, 0);
     valueGetter(PS_NUMBER, &i);
     writeMessage(PS_FILE, ps_block, i+1, PS_SIZE, 0);
     valueSetter(PS_NUMBER, i+1);
-
-    return 1;
 }
-
-
-
 
 int powerSupplySlave(){
 	char aux[81];
