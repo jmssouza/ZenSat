@@ -19,7 +19,7 @@
     #define ADC_SIZE   61
 
     #define ADD_I2C_ATMEGA  0x5E //TEM QUE ARRUMAR
-
+    #define ADD_I2C_ATMEGA  0x5E
     #define COD_VISAO       "VisaoCubeSat.py"
     #define PICTURE_NAME    "zenith.jpg"
 
@@ -45,7 +45,7 @@
     #define FILE_MASTER     "adc_cv_master.dat"
     #define STD_LOOP        "std_loop.dat"
     #define PS_AUX          "ps_aux.dat"
-
+    #define PS_AUX2          "ps_aux_2.dat"
 
 //Backup files
     #define CHECK_POWERED_CP   "check_powered_cp.dat"

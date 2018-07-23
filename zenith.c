@@ -713,7 +713,8 @@ int read_i2c(char *file_name, int position, int addr, int chan){
         char *filename = (char*)"/dev/i2c-1";
     }
     else
-    {if (chan == 2)
+    {
+        if (chan == 2)
             char *filename = (char*)"/dev/i2c-2";
         else
             return 0;
@@ -855,7 +856,7 @@ int powerSupplyMaster(){
 
     char ps_block[161];
     char aux1 [81];
-    char a[2] = "x";
+    char a[2] = "a";
     int i;
 
 
@@ -1707,7 +1708,7 @@ int Base(){
 
 //Test function
 
-int powerSupplySimulator(){
+/*int powerSupplySimulator(){
 
     float ina_values[8][2];
     char aux1 [11];
@@ -1739,7 +1740,7 @@ int powerSupplySimulator(){
     valueSetter(PS_NUMBER, i+1);
 
     return 0;
-}
+}*/
 
 int sendlandeira(char* package){
     FILE *fp = fopen("partidocomunista", "ab");
