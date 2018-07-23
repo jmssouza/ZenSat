@@ -627,6 +627,7 @@ int initializingCubeSat(int check){
 
 //General communication functions
 
+
 int write_i2c(char *file_name, int packet, int qt, int addr, int chan){
 
     FILE *file;
@@ -640,18 +641,8 @@ int write_i2c(char *file_name, int packet, int qt, int addr, int chan){
     char buffer[256] = {0};
     char send[256] = {0};
     char env[256] = {0};
-    char *filename;
+    char filename[25] = "/dev/i2c-1";
 
-    if (chan == 1){
-        *filename = (char*)"/dev/i2c-1";
-    }
-    else{
-        if (chan == 2) {
-            *filename = (char *) "/dev/i2c-2";
-        }
-        else
-            return 0;
-    }
     file = fopen(file_name, "r+b");
     if (file != NULL){
         fseek(file, packet*(PACK_SIZE), SEEK_SET);
@@ -703,6 +694,7 @@ int read_i2c(char *file_name, int position, int addr, int chan){
     int length;
     int a = 0;
     int aux = 1;
+    int auxi;
     int b = 0;
     int v = 0;
     char message[256];
@@ -710,18 +702,8 @@ int read_i2c(char *file_name, int position, int addr, int chan){
     char send[256] = {0};
     char rec[256] = "";
     char env[256] = {0};
-    char *filename;
+    char *filename[25] = "/dev/i2c-1";
 
-    if (chan == 1){
-        *filename = (char*)"/dev/i2c-1";
-    }
-    else
-    {
-        if (chan == 2)
-            *filename = (char*)"/dev/i2c-2";
-        else
-            return 0;
-    }
 
     if ((file_i2c = open(filename, O_RDWR)) < 0)
     {
@@ -795,10 +777,10 @@ int tx_uart (char *a, int tam){
         tam--;
         j++;
     }
-    /*PRECISA IMPLEMENTAR O \0!
-    if (tam == 0){
-        serialPutchar(serial_port, a[])/
-    }*/
+    //PRECISA IMPLEMENTAR O \0!
+    //if (tam == 0){
+      //  serialPutchar(serial_port, a[])/
+    //}
 }
 
 int rx_uart (char *dat){
@@ -841,14 +823,18 @@ int rx_uart (char *dat){
 
 //CubeSat communication fuctions
 
+
 int sendSimpleMessage(char *block, int op_mode, int whoami, int aux){
 
     int check;
     char pack[PACK_SIZE];
+    int i = 0;
 
     blockBuilder(block, op_mode, whoami, aux);
     packageCreator(TM_NUMBER, TM_CYCLE, block, pack);
     writeMessage(NEW_TM, pack, 0, PACK_SIZE, 0);
+    readMessage(NEW_TM, pack, 0, PACK_SIZE, 0);
+    for (i=0;i<PACK_SIZE;i++){ printf("%c", pack[i]); }
     if(whoami == 0){check = write_i2c(NEW_TM, 0, 1, ADD_I2C_ATMEGA_BASE, 1);}
     else if (whoami == 1){check = write_i2c(NEW_TM, 0, 1, ADD_I2C_ATMEGA, 1);}
     else { return 0; }
@@ -913,7 +899,7 @@ int standardState(){
     while (loop_control == 0) {
         delay(1000000);
         printf("Checking microcontroller for new commands - Attempt: %d; \n", counter + 1);
-        check_received = read_i2c(NEW_TC, 0, ADD_I2C_ATMEGA, 1);
+        //check_received = read_i2c(NEW_TC, 0, ADD_I2C_ATMEGA, 1);
 
         if (check_received == 1) {
             printf("Message received!\n");
@@ -1071,8 +1057,8 @@ int temperatureMonitor(){
 
 
 
-
 //Base interface functions
+
 
 int interfaceOperator(){
 
@@ -1396,6 +1382,8 @@ int changeOperatingMode(){
     return 0;
 }
 
+
+
 int checkZenSatState(){
     int cycles = 0;
     while(cycles < 3){
@@ -1413,6 +1401,7 @@ int checkZenSatState(){
     }
     return 0;
 }
+
 
 int readPackages(int mode){
     //Mode 0  refers to packages received and mode 1, to packages sended
@@ -1480,7 +1469,6 @@ int shutdownZenSat(){
         delay(2000000);
     }
 }
-
 
 
 
