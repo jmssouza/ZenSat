@@ -641,7 +641,7 @@ int write_i2c(char *file_name, int packet, int qt, int addr, int chan){
     char buffer[256] = {0};
     char send[256] = {0};
     char env[256] = {0};
-    char filename[25] = "/dev/i2c-1";
+    char filename[11] = "/dev/i2c-1";
 
     file = fopen(file_name, "r+b");
     if (file != NULL){
@@ -650,38 +650,38 @@ int write_i2c(char *file_name, int packet, int qt, int addr, int chan){
         fclose(file);
     }
     else{
-
         return 0;
     }
-    if ((file_i2c = open(filename, O_RDWR)) < 0)
-    {
+    if ((file_i2c = open(filename, O_RDWR)) < 0) {
         printf("Failed to open the i2c bus");
         return 0;
     }
 
-    if (ioctl(file_i2c, I2C_SLAVE, addr) < 0)
-    {
+    if (ioctl(file_i2c, I2C_SLAVE, addr) < 0) {
         printf("Failed to acquire bus access and/or talk to slave.\n");
         return 0;
     }
-    for (y = 0; y<qt;y++)
-    {
+    for (y = 0; y<qt;y++) {
         length = 32;
         for (a = 0; a<7; a++){
-            for (v = 0;v<32;v++)
-            {
+            for (v = 0;v<32;v++) {
                 env[v] = message[a*32 + y*255 + v];
             }
-            write(file_i2c, env, length);
+            if((write(file_i2c, env, length)==1)){
+                delay(10000);
+                printf("DEU BOM RAPAZIADA");
+            }
+            else{
+                printf("I2C eh uma merda");
+            }
         }
         length = 31;
-        for (v = 0;v<31;v++)
-        {
+        for (v = 0;v<31;v++) {
             env[v] = message[7*32 + y*255 + v];
         }
         write(file_i2c, env, length);
-
     }
+    fclose(file_i2c);
 
     return 1;
 }
@@ -1848,7 +1848,6 @@ int createFile(char *file_name){
     FILE * file;
 
     printf("Creating file %s ...\n", file_name);
-    delay(800000);
 
     file = fopen(file_name, "wb");
     if (file != NULL){
@@ -1900,30 +1899,28 @@ int createZenithFiles(){
 int compileCodes(int mode){
 
     if (mode == 1){
-        printf("Compiling cube.c file... \n");
-        delay(600000);
-        system("gcc cube.c -o cube -lm");
-        printf("File cube.c was already compiled.\n");
-        delay(600000);
+        printf("Compiling cubeMaster.c file... \n");
+        system("gcc cubeMaster.c -o cubeM -lm -lwiringPi -L/usr/local/lib");
+        printf("File cubeMaster.c was already compiled.\n");
+        printf("Compiling cubeSlave.c file... \n");
+        system("gcc cubeSlave.c -o cubeS -lm -lwiringPi -L/usr/local/lib");
+        printf("File cubeSlave.c was already compiled.\n");
     }
     else if (mode == 2){
         printf("Compiling base.c file... \n");
-        delay(600000);
-        system("gcc base.c -o base -lm");
+        system("gcc base.c -o base -lm -lwiringPi -L/usr/local/lib");
         printf("File base.c was already compiled. \n");
-        delay(600000);
     }
     else if (mode == 3){
-        printf("Compiling cube.c file... \n");
-        delay(600000);
-        system("gcc cube.c -o cube -lm");
-        printf("File cube.c was already compiled.\n");
-        delay(600000);
+        printf("Compiling cubeMaster.c file... \n");
+        system("gcc cubeMaster.c -o cubeM -lm -lwiringPi -L/usr/local/lib");
+        printf("File cubeMaster.c was already compiled.\n");
+        printf("Compiling cubeSlave.c file... \n");
+        system("gcc cubeSlave.c -o cubeS -lm -lwiringPi -L/usr/local/lib");
+        printf("File cubeSlave.c was already compiled.\n");
         printf("Compiling base.c file... \n");
-        delay(600000);
         system("gcc base.c -o base -lm");
         printf("File base.c was already compiled. \n");
-        delay(600000);
     }
     else {
         printf("This mode of compilation is not valid\n");
