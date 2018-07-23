@@ -3,6 +3,7 @@
  * Authors: João Matheus Siqueira Souza      (jmssouza)                            *
  *          Orlando Wozniak de Lima Nogueira (orlandowzk97)                        *
  *          Vinicius Eiji Sasaki             (sasakivinicius)                      *
+ *          Francesco Rossi Lena             (cescoow)                             *
  * São Carlos School of Engineering - University of São Paulo                      *
  * First semester - 2018                                                           *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -681,8 +682,6 @@ int write_i2c(char *file_name, int packet, int qt, int addr, int chan){
         }
         write(file_i2c, env, length);
     }
-    fclose(file_i2c);
-
     return 1;
 }
 
