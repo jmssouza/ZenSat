@@ -702,7 +702,7 @@ int read_i2c(char *file_name, int position, int addr, int chan){
     char send[256] = {0};
     char rec[256] = "";
     char env[256] = {0};
-    char *filename[25] = "/dev/i2c-1";
+    char filename[25] = "/dev/i2c-1";
 
 
     if ((file_i2c = open(filename, O_RDWR)) < 0)
