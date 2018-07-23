@@ -640,12 +640,14 @@ int write_i2c(char *file_name, int packet, int qt, int addr, int chan){
     char buffer[256] = {0};
     char send[256] = {0};
     char env[256] = {0};
+    char *filename;
+
     if (chan == 1){
-        char *filename = (char*)"/dev/i2c-1";
+        *filename = (char*)"/dev/i2c-1";
     }
     else{
         if (chan == 2) {
-            char *filename = (char *) "/dev/i2c-2";
+            *filename = (char *) "/dev/i2c-2";
         }
         else
             return 0;
@@ -708,14 +710,15 @@ int read_i2c(char *file_name, int position, int addr, int chan){
     char send[256] = {0};
     char rec[256] = "";
     char env[256] = {0};
+    char *filename;
 
     if (chan == 1){
-        char *filename = (char*)"/dev/i2c-1";
+        *filename = (char*)"/dev/i2c-1";
     }
     else
     {
         if (chan == 2)
-            char *filename = (char*)"/dev/i2c-2";
+            *filename = (char*)"/dev/i2c-2";
         else
             return 0;
     }
