@@ -18,8 +18,8 @@
     #define PS_SIZE    161
     #define ADC_SIZE   61
 
-    #define ADD_I2C_ATMEGA       0x5E //TEM QUE ARRUMAR
-    #define ADD_I2C_ATMEGA_BASE  0x5E
+    #define ADD_I2C_ATMEGA       0x08 //TEM QUE ARRUMAR
+    #define ADD_I2C_ATMEGA_BASE  0x08
     #define COD_VISAO       "VisaoCubeSat.py"
     #define PICTURE_NAME    "zenith.jpg"
 

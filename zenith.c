@@ -323,11 +323,6 @@ int blockBuilder(char *block, int operating_mode, int whoami, int aux){
             else{ printf("Error - in 'blockBuilder', whoami passed is incorrect. \n"); }
             break; //Mission 5 - Pointing
         }
-        case 6 : { //Mission 6 - Send picture
-            //Mandar o tamanho da foto que é desejado
-            readMessage(PICTURE_NAME, block, aux, BLOCK_SIZE, 0);
-            break;
-        }
         case 7 : {
             if (whoami == 0){}
             else if (whoami == 1){}
@@ -380,9 +375,7 @@ int packageCreator(char *pack_num_file, char *pack_cycle_file, char *block, char
     int pack_cycle;
     int op_mode;
 
-    for (i=0;i<PACK_SIZE+1;i++){
-        package[i] = 0;
-    }
+    for (i=0;i<PACK_SIZE;i++){ package[i] = '\0'; }
 
     //Getting data and setting the system
     valueGetter(pack_num_file  , &pack_number);        //Getting the number of the last package created
@@ -412,7 +405,7 @@ int packageCreator(char *pack_num_file, char *pack_cycle_file, char *block, char
 
     for(i=3;i<252;i++){
         if (i<123){
-            package[i]=*(block+(i-3));
+            package[i]= *(block+(i-3));
         }
         else if (i>124){
             package[i] = *(block+(i-5));
@@ -668,13 +661,8 @@ int write_i2c(char *file_name, int packet, int qt, int addr, int chan){
             for (v = 0;v<32;v++) {
                 env[v] = message[a*32 + y*255 + v];
             }
-            if((write(file_i2c, env, length)==1)){
-                delay(10000);
-                printf("DEU BOM RAPAZIADA");
-            }
-            else{
-                printf("I2C eh uma merda");
-            }
+            write(file_i2c, env, length);
+            delay(1000);
         }
         length = 31;
         for (v = 0;v<31;v++) {
@@ -704,14 +692,12 @@ int read_i2c(char *file_name, int position, int addr, int chan){
     char filename[25] = "/dev/i2c-1";
 
 
-    if ((file_i2c = open(filename, O_RDWR)) < 0)
-    {
+    if ((file_i2c = open(filename, O_RDWR)) < 0){
         printf("Failed to open the i2c bus");
         return 0;
     }
 
-    if (ioctl(file_i2c, I2C_SLAVE, addr) < 0)
-    {
+    if (ioctl(file_i2c, I2C_SLAVE, addr) < 0){
         printf("Failed to acquire bus access and/or talk to slave.\n");
         return 0;
     }
@@ -752,7 +738,6 @@ int read_i2c(char *file_name, int position, int addr, int chan){
     else{
         return 0;
     }
-
     return 1;
 }
 
@@ -898,7 +883,7 @@ int standardState(){
     while (loop_control == 0) {
         delay(1000000);
         printf("Checking microcontroller for new commands - Attempt: %d; \n", counter + 1);
-        //check_received = read_i2c(NEW_TC, 0, ADD_I2C_ATMEGA, 1);
+        check_received = read_i2c(NEW_TC, 0, ADD_I2C_ATMEGA, 1);
 
         if (check_received == 1) {
             printf("Message received!\n");
@@ -1524,6 +1509,7 @@ int CubeSatMaster(){
                 mission_check = healthInfo(operating_mode);
                 if (mission_check == 1){
                     mission_counter = 0;
+                    previous_operating_mode = operating_mode;
                     operating_mode = 0;
                     valueSetter(MODE_FILE, operating_mode);
                 }
@@ -1532,6 +1518,9 @@ int CubeSatMaster(){
                     if (mission_counter == 3){
                         mission_counter = 0;
                         sendSimpleMessage(block, 10, 1, operating_mode);
+                        previous_operating_mode = operating_mode;
+                        operating_mode = 0;
+                        valueSetter(MODE_FILE, operating_mode);
                     }
                 }
                 break;
@@ -1540,6 +1529,7 @@ int CubeSatMaster(){
                 mission_check = powerSupplyCheck();
                 if (mission_check == 1){
                     mission_counter = 0;
+                    previous_operating_mode = operating_mode;
                     operating_mode = 0;
                     valueSetter(MODE_FILE, operating_mode);
                 }
@@ -1548,6 +1538,7 @@ int CubeSatMaster(){
                     if (mission_counter == 3){
                         mission_counter = 0;
                         sendSimpleMessage(block, 10, 1, operating_mode);
+                        previous_operating_mode = operating_mode;
                         operating_mode = 0;
                         valueSetter(MODE_FILE, operating_mode);
                     }
@@ -1558,6 +1549,7 @@ int CubeSatMaster(){
                 mission_check = oneAxisStabilization();
                 if (mission_check == 1){
                     mission_counter = 0;
+                    previous_operating_mode = operating_mode;
                     operating_mode = 0;
                     valueSetter(MODE_FILE, operating_mode);
                 }
@@ -1566,6 +1558,7 @@ int CubeSatMaster(){
                     if (mission_counter == 3){
                         mission_counter = 0;
                         sendSimpleMessage(block, 10, 1, operating_mode);
+                        previous_operating_mode = operating_mode;
                         operating_mode = 0;
                         valueSetter(MODE_FILE, operating_mode);
                     }
@@ -1576,6 +1569,7 @@ int CubeSatMaster(){
                 mission_check = horizonDetermination();
                 if (mission_check == 1){
                     mission_counter = 0;
+                    previous_operating_mode = operating_mode;
                     operating_mode = 0;
                     valueSetter(MODE_FILE, operating_mode);
                 }
@@ -1584,6 +1578,7 @@ int CubeSatMaster(){
                     if (mission_counter == 3){
                         mission_counter = 0;
                         sendSimpleMessage(block, 10, 1, operating_mode);
+                        previous_operating_mode = operating_mode;
                         operating_mode = 0;
                         valueSetter(MODE_FILE, operating_mode);
                     }
@@ -1594,6 +1589,7 @@ int CubeSatMaster(){
                 mission_check = pointing();
                 if (mission_check == 1){
                     mission_counter = 0;
+                    previous_operating_mode = operating_mode;
                     operating_mode = 0;
                     valueSetter(MODE_FILE, operating_mode);
                 }
@@ -1602,6 +1598,7 @@ int CubeSatMaster(){
                     if (mission_counter == 3){
                         mission_counter = 0;
                         sendSimpleMessage(block, 10, 1, operating_mode);
+                        previous_operating_mode = operating_mode;
                         operating_mode = 0;
                         valueSetter(MODE_FILE, operating_mode);
                     }
@@ -1612,6 +1609,7 @@ int CubeSatMaster(){
                 mission_check = livefeed(1);
                 if (mission_check == 1){
                     mission_counter = 0;
+                    previous_operating_mode = operating_mode;
                     operating_mode = 0;
                     valueSetter(MODE_FILE, operating_mode);
                 }
@@ -1620,6 +1618,7 @@ int CubeSatMaster(){
                     if (mission_counter == 3){
                         mission_counter = 0;
                         sendSimpleMessage(block, 10, 1, operating_mode);
+                        previous_operating_mode = operating_mode;
                         operating_mode = 0;
                         valueSetter(MODE_FILE, operating_mode);
                     }
@@ -1630,6 +1629,7 @@ int CubeSatMaster(){
                 mission_check = temperatureMonitor();
                 if (mission_check == 1){
                     mission_counter = 0;
+                    previous_operating_mode = operating_mode;
                     operating_mode = 0;
                     valueSetter(MODE_FILE, operating_mode);
                 }
@@ -1638,6 +1638,7 @@ int CubeSatMaster(){
                     if (mission_counter == 3){
                         mission_counter = 0;
                         sendSimpleMessage(block, 10, 1, operating_mode);
+                        previous_operating_mode = operating_mode;
                         operating_mode = 0;
                         valueSetter(MODE_FILE, operating_mode);
                     }
