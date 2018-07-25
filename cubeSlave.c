@@ -2,6 +2,6 @@
 
 int main(){
     int ret;
-    ret = CubeSatMaster();
+    ret = CubeSatSlave();
     return ret;
 }

@@ -313,7 +313,25 @@ int blockBuilder(char *block, int operating_mode, int whoami, int aux){
         }
         case 4 : { //Mission 4 - Horizon determination
             if (whoami == 0){}
-            else if (whoami == 1){}
+            else if (whoami == 1){
+
+                char horizon[91];
+                char zeros[126];
+                int i = 0;
+
+                for (i=0;i<125;i++){zeros[i]= '0';}
+                zeros[125] = '\0';
+
+                readMessage(OPEN_CV,horizon,0, 91, 0);
+                getDate(time);
+
+                strcat(block, cubesat);
+                strcat(block, horizon);
+                strcat(block, zeros);
+                strcat(block, time);
+                strcat(block,zenith_eesc);
+                block[BLOCK_SIZE-1] = '\0';
+            }
             else{ printf("Error - in 'blockBuilder', whoami passed is incorrect. \n"); }
             break;
         }
@@ -401,7 +419,7 @@ int packageCreator(char *pack_num_file, char *pack_cycle_file, char *block, char
     package[124]=op_mode;
 
     package[252]=pack_number;
-    package[253]=op_mode;
+    package[253]='x';
 
     for(i=3;i<252;i++){
         if (i<123){
@@ -541,11 +559,11 @@ int createBackup(){
     system("cp " ADC_RX_NUMBER   " "  ADC_TX_NUMBER_CP   );
     system("cp " ADC_RX_FILE     " "  ADC_RX_FILE_CP     );
     system("cp " ADC_RX_NUMBER   " "  ADC_RX_NUMBER_CP   );
-    system("cp " FILE_SLAVE      " "  FILE_SLAVE_CP      );
-    system("cp " FILE_MASTER     " "  FILE_MASTER_CP     );
+    system("cp " FILE_CV         " "  FILE_CV_CP         );
     system("cp " STD_LOOP        " "  STD_LOOP_CP        );
     system("cp " PS_AUX1         " "  PS_AUX1_CP         );
     system("cp " PS_AUX2         " "  PS_AUX2_CP         );
+    system("cp " OPEN_CV         " "  OPEN_CV_CP         );
 
     return 0;
 }
@@ -569,11 +587,11 @@ int recoveryFiles(){
     system("cp " ADC_RX_NUMBER_CP   " "  ADC_TX_NUMBER   );
     system("cp " ADC_RX_FILE_CP     " "  ADC_RX_FILE     );
     system("cp " ADC_RX_NUMBER_CP   " "  ADC_RX_NUMBER   );
-    system("cp " FILE_SLAVE_CP      " "  FILE_SLAVE      );
-    system("cp " FILE_MASTER_CP     " "  FILE_MASTER     );
+    system("cp " FILE_CV_CP         " "  FILE_CV         );
     system("cp " STD_LOOP_CP        " "  STD_LOOP        );
     system("cp " PS_AUX1_CP         " "  PS_AUX1         );
     system("cp " PS_AUX2_CP         " "  PS_AUX2         );
+    system("cp " OPEN_CV_CP         " "  OPEN_CV         );
 
     return 0;
 }
@@ -742,7 +760,7 @@ int read_i2c(char *file_name, int position, int addr, int chan){
     return 1;
 }
 
-int tx_uart(char* str, int tam){
+int tx_uart(char * str, int tam){
 
     int serial_port, aux;
     int i = 0;
@@ -759,7 +777,7 @@ int tx_uart(char* str, int tam){
     }
 
     for(i = 0; i < tam; i++){ senddat[i] = str[i];}
-    str[tam] = '\0';
+    senddat[tam] = '\0';
 
     i = 0;
     while (tam >= 0){
@@ -767,11 +785,12 @@ int tx_uart(char* str, int tam){
         tam--;
         i++;
     }
-
-
+    serialClose(serial_port);
+    return 0;
 }
 
 int rx_uart(char* str){
+
     int serial_port;
     char datachar;
 
@@ -800,13 +819,9 @@ int rx_uart(char* str){
             }
         }
     }
+    serialClose(serial_port);
     return 1;
 }
-
-
-
-
-
 
 
 
@@ -834,13 +849,13 @@ int powerSupplyMaster(){
 
     char ps_block[161];
     char aux1 [81];
-    char a = 'a';
+    char a[2] = "a";
     int i;
 
     system("python inaMaster.py");
-
     //ENVIA CARACTERE VIA UART PARA RASP SLAVE PARA INICIAR LEITURA INAS RASP SLAVE
     tx_uart(a,1);
+    delay(100000);
 
     //RECEBE VIA UART DADOS INA RASP SLAVE
     rx_uart(aux1);
@@ -862,11 +877,14 @@ int powerSupplySlave(){
     system("python inaSlave.py"); //LEITURA DADOS INAS RASP SLAVE E ESCRITA NO ARQUIVO PS_AUX2
     readMessage(PS_AUX2, aux, 0, 80, 0);	 //LEITURA DO ARQUIVO PS_AUX2
     tx_uart(aux,80);		// ENVIO PARA A RASP MASTER OS DADOS DOS INAS DA RASP SLAVE
-
     return 1;
 }
 
-
+int computerVision(){
+    system("raspistill -vf -vf -w 640 -h 480 -o captura.jpg -q 10");
+    system("python VisaoCubeSatCompeticao.py");
+    return 0;
+}
 
 
 //CubeSatMaster missions functions
@@ -926,9 +944,6 @@ int healthInfo(){
     int check;
     int cycles;
 
-    readMessage(NEW_TC, package, 0, PACK_SIZE, 0);
-    cycles = package[13];
-    valueSetter(STD_LOOP, cycles);
 
     system("clear");
     printf("Operating mode 1 - Sending a simple message about Cubesat Health\n");
@@ -961,12 +976,13 @@ int powerSupplyCheck(){
     int check;
     int aux = 0;
     int sample;
-    int time_delay;
     int i=0;
 
-    readMessage(NEW_TC, tc_pack, 0, PACK_SIZE, 0);
-    sample = tc_pack[13];
-    time_delay = tc_pack[14];
+
+    sample = 5;
+    //readMessage(NEW_TC, tc_pack, 0, PACK_SIZE, 0);
+    //sample = tc_pack[13];
+    //time_delay = tc_pack[14];
 
 
     system("clear");
@@ -980,7 +996,7 @@ int powerSupplyCheck(){
         printf("Building and sending the package...\n");
         valueGetter(PS_NUMBER, &block_position);
         check = sendSimpleMessage(block, 2, 1, sample);
-        delay(1000000*time_delay);
+        delay(1000000);
         i ++;
         if(check != 1){ aux++; }
     }
@@ -1026,6 +1042,23 @@ int oneAxisStabilization(){
 }
 
 int horizonDetermination(){
+
+    char refMaster[46]="";
+    char refSlave[46]="";
+    char block[91]="";
+    char b[2] = "b";
+    char pack[BLOCK_SIZE];
+
+    tx_uart(b,1);
+    computerVision();
+    readMessage(FILE_CV, refMaster, 0, 46, 0);
+    rx_uart(refSlave);
+    strcat(block, refMaster);
+    strcat(block, refSlave);
+    writeMessage(OPEN_CV,block,0,91,0);
+
+    sendSimpleMessage(pack, 4, 1, 0);
+
     return 0;
 }
 
@@ -1457,25 +1490,31 @@ int shutdownZenSat(){
 
 int CubeSatSlave(){
 
-    char status;
+    char status[2];
     int main_loop_control = 1;
     int check;
 
     printf("Initializing CubeSat on slave...\n");
-    initializingCubeSat();
+    //initializingCubeSat(check);
 
     while(main_loop_control){
         printf("Waiting for Master commands...\n");
         rx_uart(status);
-        switch (status){
+        printf("Current Status of Slave: %c;",status[0]);
+        switch (status[0]){
             case 'a':{
-                printf("Command received - Mode a - Power supply");
                 powerSupplySlave();
-                status='0';
+                status[1]='0';
                 break;
             }
             case 'b':{
-                //TiagoBrilha
+                char refSlave[46] = "";
+
+                computerVision();
+                readMessage(FILE_CV, refSlave, 0, 46, 0);
+                delay(5000000);
+                tx_uart(refSlave, 46);
+
                 break;
             }
             case 'c':{
@@ -1896,11 +1935,11 @@ int createZenithFiles(){
     aux[14] = createFile(ADC_TX_NUMBER);
     aux[15] = createFile(ADC_RX_FILE);
     aux[16] = createFile(ADC_RX_NUMBER);
-    aux[17] = createFile(FILE_SLAVE);
-    aux[18] = createFile(FILE_MASTER);
-    aux[19] = createFile(STD_LOOP);
-    aux[20] = createFile(PS_AUX1);
-    aux[21] = createFile(PS_AUX2);
+    aux[17] = createFile(FILE_CV);
+    aux[18] = createFile(STD_LOOP);
+    aux[19] = createFile(PS_AUX1);
+    aux[20] = createFile(PS_AUX2);
+    aux[21] = createFile(OPEN_CV);
 
 
     for (i=0;i<22;i++){ if (aux[i] == 0){ counter ++; }}

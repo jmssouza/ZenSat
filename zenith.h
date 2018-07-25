@@ -61,6 +61,7 @@
             int sendSimpleMessage(char *block, int op_mode, int whoami, int aux);
             int powerSupplyMaster();
             int powerSupplySlave();
+            int computerVision();
         //CubeSat missions functions
             int standardState();
             int healthInfo();

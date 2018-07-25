@@ -17,6 +17,7 @@
     #define TIME_SIZE  21
     #define PS_SIZE    161
     #define ADC_SIZE   61
+    #define ENTRY_SZ   10
 
     #define ADD_I2C_ATMEGA       0x08 //TEM QUE ARRUMAR
     #define ADD_I2C_ATMEGA_BASE  0x08
@@ -41,11 +42,11 @@
     #define ADC_TX_NUMBER   "adc_tx_num.dat"
     #define ADC_RX_FILE     "adc_rx_file.dat"
     #define ADC_RX_NUMBER   "adc_rx_num.dat"
-    #define FILE_SLAVE      "adc_cv_slave.dat"
-    #define FILE_MASTER     "adc_cv_master.dat"
+    #define FILE_CV         "adc_cv.dat"
     #define STD_LOOP        "std_loop.dat"
     #define PS_AUX1         "ps_aux_1.dat"
     #define PS_AUX2         "ps_aux_2.dat"
+    #define OPEN_CV         "open_cv.dat"
 
 //Backup files
     #define CHECK_POWERED_CP   "check_powered_cp.dat"
@@ -65,10 +66,10 @@
     #define ADC_TX_NUMBER_CP   "adc_tx_num_cp.dat"
     #define ADC_RX_FILE_CP     "adc_rx_file_cp.dat"
     #define ADC_RX_NUMBER_CP   "adc_rx_num_cp.dat"
-    #define FILE_SLAVE_CP      "adc_cv_slave_cp.dat"
-    #define FILE_MASTER_CP     "adc_cv_master_cp.dat"
+    #define FILE_CV_CP         "adc_cv_cp.dat"
     #define STD_LOOP_CP        "std_loop_cp.dat"
     #define PS_AUX1_CP         "ps_aux_1_cp.dat"
     #define PS_AUX2_CP         "ps_aux_2_cp.dat"
+    #define OPEN_CV_CP         "open_cv_cp.dat"
 
 #endif //CODE_CONSTANTS_H
