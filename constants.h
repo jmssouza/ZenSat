@@ -19,6 +19,13 @@
     #define ADC_SIZE   61
     #define ENTRY_SZ   10
 
+
+    #define LF_FILE         "livefeed_packages.dat"
+    #define LF_NUM          "lf_num.dat"
+    #define LF_CYCLE        "lf_cycle.dat"
+    #define PICTURE         "picture.jpg"
+
+
     #define ADD_I2C_ATMEGA       0x08 //TEM QUE ARRUMAR
     #define ADD_I2C_ATMEGA_BASE  0x08
     #define COD_VISAO       "VisaoCubeSat.py"

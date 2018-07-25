@@ -820,6 +820,44 @@ int rx_uart(char* str){
     return 1;
 }
 
+int spiTxRx(unsigned char txDat, int fd) {
+    unsigned char rxDat;
+
+    struct spi_ioc_transfer spi;
+
+    memset (&spi, 0, sizeof (spi));
+
+    spi.tx_buf        = (unsigned long)&txDat;
+    spi.rx_buf        = (unsigned long)&rxDat;
+    spi.len           = 1;
+
+    ioctl (fd, SPI_IOC_MESSAGE(1), &spi);
+
+    return rxDat;
+}
+
+void spi_str_tx(unsigned char* str, int size){
+    int i;
+    int fd = open("/dev/spidev0.1", O_RDWR);
+    unsigned char aux[size+1];
+
+    unsigned int speed = 500000;
+    ioctl (fd, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
+
+    struct spi_ioc_transfer spi;
+    memset (&spi, 0, sizeof (spi));
+
+    for(i = 0; i < size; i++){
+        aux[i] = str[i];
+    }
+    aux[size] = 'x';
+
+    for(i = 0; i <= size; i++){
+        spiTxRx(aux[i], fd);
+        usleep(10);
+    }
+}
+
 
 
 
@@ -988,6 +1026,7 @@ int powerSupplyCheck(){
     while(i<sample) {
         printf("\nSample: %d\n", i+1);
         powerSupplyMaster();
+        delay(1000000);
 
         printf("Building and sending the package...\n");
         valueGetter(PS_NUMBER, &block_position);
@@ -1743,54 +1782,10 @@ int Base(){
 
 
 
-//Test function
+//livefeed functions
 
-/*int powerSupplySimulator(){
-
-    float ina_values[8][2];
-    char aux1 [11];
-    char values [PS_SIZE];
-    int i;
-
-    values[0] = '/0';
-
-    //GETTING DATA FROM INAS - ORLANDIN IMPLEMENTA ASSIM MEU QUERIDO
-    for(i=0;i<8;i++){
-        printf("Entry tension from ina %d: ", i +1);
-        scanf("%f", &ina_values[i][0]);
-        printf("\nEntry current from ina %d: ", i +1);
-        scanf("%f", &ina_values[i][1]);
-        printf("\n");
-    }//APAGAR ESSE "FOR" DEPOIS, USEI PARA TESTAR
-
-    //PUT DATA INTO FILE
-    for(i=0;i<8;i++){
-        ftoa(ina_values[i][0], aux1, 5);
-        tenBlock(aux1);
-        strcat(values,aux1);
-        ftoa(ina_values[i][1], aux1, 5);
-        tenBlock(aux1);
-        strcat(values,aux1);
-    }
-    valueGetter(PS_NUMBER, &i);
-    writeMessage(PS_FILE, values,i+1, PS_SIZE, 0);
-    valueSetter(PS_NUMBER, i+1);
-
-    return 0;
-}*/
-
-int sendlandeira(char* package){
-    FILE *fp = fopen("partidocomunista", "ab");
-
-    fwrite(package, 1, BLOCK_SIZE, fp);
-
-    fclose(fp);
-
-    return 1;
-}
-
-int file_size(char* FILE_NAME){
-    FILE *fp = fopen(FILE_NAME, "rb");
+long int file_size(char* file_name){
+    FILE *fp = fopen(file_name, "rb");
 
     if(fp == NULL){
         printf("Error opening file!\n");
@@ -1806,82 +1801,178 @@ int file_size(char* FILE_NAME){
     return length;
 }
 
-int livefeed_tx(char *FILE_NAME){
+int livefeed_file_check(){
+    FILE *fp = fopen(LF_FILE, "r+b");
 
-    int picture_size, packages_num, last_size, i;
+    if(fp != NULL){
+        fclose(fp);
+        system("rm livefeed_packages.dat");
+        system("rm txremontado.jpg");
+        system("rm rxpicture.jpg");
+        printf("Old files deleted!\n");
+    }
+    fp = fopen(LF_FILE, "wb");
+    if(fp == NULL){
+        fclose(fp);
+        printf("Error - file %s cannot be created.\n", LF_FILE);
+        return 0;
+    }
+    fclose(fp);
+    printf("%s created!\n", LF_FILE);
+
+    FILE *fnum = fopen(LF_NUM, "w");
+    if(fnum == NULL){
+        fclose(fnum);
+        printf("Error - file %s cannot be created.\n", LF_NUM);
+
+        return 0;
+    }
+    fprintf(fnum,"0");
+    fclose(fnum);
+    printf("%s created!\n", LF_NUM);
+
+    FILE *fcycle = fopen(LF_CYCLE, "w");
+    if(fnum == NULL){
+        fclose(fnum);
+        printf("Error - file %s cannot be created.\n", LF_CYCLE);
+
+        return 0;
+    }
+    fprintf(fcycle,"0");
+    fclose(fcycle);
+    printf("%s created!\n", LF_CYCLE);
+
+    return 1;
+}
+
+int livefeed_w_message(char* file_name, char* info, int size){
+    FILE *fp = fopen(file_name, "ab");
+
+    fwrite(info, 1, size, fp);
+    fclose(fp);
+
+    return 0;
+}
+
+int livefeed_p_creator(char *pack_num_file, char *pack_cycle_file, char *block, char *package){
+
+    int i;
+    int aux;
+    int position;
+    int pack_number;
+    int pack_cycle;
+    int op_mode;
+
+    for (i=0;i<PACK_SIZE;i++){
+        package[i] = 0;
+    }
+
+    //Getting data
+    valueGetter(pack_num_file  , &pack_number);        //Getting the number of the last package created
+    valueGetter(pack_cycle_file, &pack_cycle );        //Getting the number of the current cycle in CubeSat
+    valueGetter(MODE_FILE      , &op_mode    );        //Getting the number of operating mode
+
+    //Building the package
+
+    package[0]=pack_number;
+    package[1]=pack_cycle;
+    package[2]=op_mode;
+
+    package[123]=pack_number;
+    package[124]=op_mode;
+
+    package[253]=pack_number;
+    package[254]= 'x';
+
+    for(i=3;i<253;i++){
+        if (i<123){
+            package[i] = block[i-3];
+        }
+        else if (i>124){
+            package[i] = block[i-5];
+        }
+    }
+
+    position = pack_cycle*PACK_SIZE + pack_number;
+    livefeed_w_message(LF_FILE, package, PACK_SIZE);
+
+    //Setting the system
+    pack_number++;
+    if (pack_number>PACK_SIZE){
+        pack_number=0;
+        pack_cycle++;
+    }
+
+    valueSetter(pack_num_file  , pack_number);
+    valueSetter(pack_cycle_file, pack_cycle );
+
+    return 1;
+}
+
+void livefeed_p_to_b(char* block, char* package){
+    int i;
+
+    for(i = 0; i < 120; i++){ block[i] = package[i+3];}
+    for(i = 120; i < 248; i++){ block[i] = package[i+5];}
+}
+
+int livefeed_tx(){
+    long int picture_size;
+    int packages_num, last_size, i;
+
     char block[BLOCK_SIZE];
     char package[PACK_SIZE];
-    picture_size = file_size(FILE_NAME);
+
+    char psize_str[5];
+
+    system("raspistill -vf -hf -o picture.jpg -w 640 -h 480 -q 10");
+
+    if(livefeed_file_check() == 0){
+        printf("Error - LF files cannot be created.\n");
+        return 0;
+    }
+
+    picture_size = file_size(PICTURE);
 
     if(picture_size == 0){
+        printf("Error - Picture cannot be oppened.\n");
         return 0;
     }
 
     packages_num = picture_size/BLOCK_SIZE;
     last_size = picture_size%BLOCK_SIZE;
+    intToStr(picture_size, psize_str, 5);
+    printf("pack %s\n", psize_str);
 
+    for(i = 0; i < 5; i++){
+        block[i] = psize_str[i];
+    }
+    for(i = 5; i < BLOCK_SIZE; i++){ block[i] = 0;}
+
+    livefeed_p_creator(LF_NUM, LF_CYCLE, block, package);
+    write_i2c(LF_FILE, 0, 1, ADD_I2C_ATMEGA, 1);
 
     for(i = 0; i < (packages_num - 1); i++){
-        //blockBuilder(block, 6, i);
-        packageCreator(TM_NUMBER, TM_CYCLE, block, package);
-        sendlandeira(block);
+        readMessage(PICTURE, block, i, BLOCK_SIZE, 0);
+        livefeed_p_creator(LF_NUM, LF_CYCLE, block, package);
+        write_i2c(LF_FILE, (i+1), 1, ADD_I2C_ATMEGA, 1);
     }
 
     if(i == (packages_num - 1)){
-        FILE *fp = fopen(FILE_NAME, "rb");
+        FILE *fp = fopen(PICTURE, "rb");
 
         if(fp != NULL){
             fseek(fp, BLOCK_SIZE*i, SEEK_SET);
             fread(block, 1, last_size, fp);
 
-            for(int j = last_size; j < BLOCK_SIZE; j++){
-                block[j] = 0;
-            }
+            for(int j = last_size; j < BLOCK_SIZE; j++){ block[j] = 0;}
 
-            packageCreator(TM_NUMBER, TM_CYCLE, block, package);
-            sendlandeira(block);
+            livefeed_p_creator(LF_NUM, LF_CYCLE, block, package);
+            write_i2c(LF_FILE, (i+1), 1, ADD_I2C_ATMEGA, 1);
 
             return 1;
         }
     }
-}
-
-int CubeSatTest(){
-    int i = 0;
-    int j = 0;
-    int mode = 0;
-    int pack = 0;
-    char msg[255];
-
-    while (i == 0){
-        system("cls");
-        for(j=0;j<255;j++) {
-            msg[i] = 0;
-        }
-
-        printf(" Digite o modo de operacao - ");
-        scanf ("%d", &mode);
-        printf("\n Digite o num do pack - ");
-        scanf ("%d", &pack);
-
-
-        msg[0]=pack;
-        msg[1]=0;
-        msg[2]=mode;
-
-        msg[123]=pack;
-        msg[124]=mode;
-
-        msg[252]=pack;
-        msg[253]=mode;
-
-        writeMessage(NEW_TC, msg, 0, PACK_SIZE, 0);
-
-        printf("\nDigite 1 para sair.\n");
-        scanf ("%d", &i);
-    }
-
-    return 0;
 }
 
 

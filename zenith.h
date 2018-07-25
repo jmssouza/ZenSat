@@ -18,6 +18,8 @@
         #include <stdlib.h>
         #include <math.h>
         #include <time.h>
+        #include <sys/ioctl.h>
+        #include <linux/spi/spidev.h>
         #include <errno.h>
         #include <wiringPi.h>
         #include <wiringSerial.h>
@@ -58,6 +60,8 @@
             int read_i2c(char *file_name, int position, int addr,int chan);
             int tx_uart (char *str, int tam);
             int rx_uart (char *str);
+            int spiTxRx(unsigned char txDat, int fd);
+            void spi_str_tx(unsigned char* str, int size);
             int sendSimpleMessage(char *block, int op_mode, int whoami, int aux);
             int powerSupplyMaster();
             int powerSupplySlave();
@@ -84,11 +88,12 @@
             int CubeSatMaster();
             int Base();
         //Test functions
-            int powerSupplySimulator();
-            int CubeSatTest();
-            int sendlandeira(char* package);
-            int file_size(char* FILE_NAME);
-            int livefeed_tx(char *FILE_NAME);
+            long int file_size(char* file_name);
+            int livefeed_file_check();
+            int livefeed_w_message(char* file_name, char* info, int size);
+            int livefeed_p_creator(char *pack_num_file, char *pack_cycle_file, char *block, char *package);
+            void livefeed_p_to_b(char* block, char* package);
+            int livefeed_tx();
         //Install functions
             int createFile(char *file_name);
             int createZenithFiles();
