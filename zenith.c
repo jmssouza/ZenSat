@@ -619,16 +619,13 @@ int initializingCubeSat(int check){
     else if (check == 1){
         printf("CubeSat is not initializing for the first time...\n");
         printf("Activating recovery mode...\n");
-        delay(1000000);
         recoveryFiles();
         printf("Recovering system...\n");
-        delay(3000000);
         createBackup();
         printf("System recovered.\n");
     }
     else{
         printf("ERROR - System cracked.\n");
-        delay(2000000);
         return 0;
     }
     //Implementar inicialização da outra rasp
@@ -838,7 +835,6 @@ int sendSimpleMessage(char *block, int op_mode, int whoami, int aux){
     packageCreator(TM_NUMBER, TM_CYCLE, block, pack);
     writeMessage(NEW_TM, pack, 0, PACK_SIZE, 0);
     readMessage(NEW_TM, pack, 0, PACK_SIZE, 0);
-    for (i=0;i<PACK_SIZE;i++){ printf("%c", pack[i]); }
     if(whoami == 0){check = write_i2c(NEW_TM, 0, 1, ADD_I2C_ATMEGA_BASE, 1);}
     else if (whoami == 1){check = write_i2c(NEW_TM, 0, 1, ADD_I2C_ATMEGA, 1);}
     else { return 0; }
@@ -996,7 +992,6 @@ int powerSupplyCheck(){
         printf("Building and sending the package...\n");
         valueGetter(PS_NUMBER, &block_position);
         check = sendSimpleMessage(block, 2, 1, sample);
-        delay(1000000);
         i ++;
         if(check != 1){ aux++; }
     }
@@ -1504,7 +1499,7 @@ int CubeSatSlave(){
         switch (status[0]){
             case 'a':{
                 powerSupplySlave();
-                status[1]='0';
+                status[0]='0';
                 break;
             }
             case 'b':{
@@ -1514,7 +1509,7 @@ int CubeSatSlave(){
                 readMessage(FILE_CV, refSlave, 0, 46, 0);
                 delay(5000000);
                 tx_uart(refSlave, 46);
-
+                status[0]='0';
                 break;
             }
             case 'c':{
@@ -1993,9 +1988,7 @@ int installer(){
     createZenithFiles();
     printf("Compiling files... \n");
     compileCodes(mode);
-    delay(1000000);
     printf("zenith.h is already installed!\n\n");
-    delay(2000000);
 
     return 0;
 }
