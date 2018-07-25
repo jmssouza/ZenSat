@@ -44,8 +44,8 @@
     #define FILE_SLAVE      "adc_cv_slave.dat"
     #define FILE_MASTER     "adc_cv_master.dat"
     #define STD_LOOP        "std_loop.dat"
-    #define PS_AUX          "ps_aux.dat"
-    #define PS_AUX2          "ps_aux_2.dat"
+    #define PS_AUX1         "ps_aux_1.dat"
+    #define PS_AUX2         "ps_aux_2.dat"
 
 //Backup files
     #define CHECK_POWERED_CP   "check_powered_cp.dat"
@@ -68,6 +68,7 @@
     #define FILE_SLAVE_CP      "adc_cv_slave_cp.dat"
     #define FILE_MASTER_CP     "adc_cv_master_cp.dat"
     #define STD_LOOP_CP        "std_loop_cp.dat"
-    #define PS_AUX_CP          "ps_aux_cp.dat"
+    #define PS_AUX1_CP         "ps_aux_1_cp.dat"
+    #define PS_AUX2_CP         "ps_aux_2_cp.dat"
 
 #endif //CODE_CONSTANTS_H

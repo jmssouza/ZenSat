@@ -56,8 +56,8 @@
         //Communication functions
             int write_i2c(char *file_name, int packet, int qt, int addr,int chan);
             int read_i2c(char *file_name, int position, int addr,int chan);
-            int tx_uart (char *a, int tam);
-            int rx_uart (char *dat);
+            int tx_uart (char *str, int tam);
+            int rx_uart (char *str);
             int sendSimpleMessage(char *block, int op_mode, int whoami, int aux);
             int powerSupplyMaster();
             int powerSupplySlave();

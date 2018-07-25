@@ -544,7 +544,8 @@ int createBackup(){
     system("cp " FILE_SLAVE      " "  FILE_SLAVE_CP      );
     system("cp " FILE_MASTER     " "  FILE_MASTER_CP     );
     system("cp " STD_LOOP        " "  STD_LOOP_CP        );
-    system("cp " PS_AUX          " "  PS_AUX_CP          );
+    system("cp " PS_AUX1         " "  PS_AUX1_CP         );
+    system("cp " PS_AUX2         " "  PS_AUX2_CP         );
 
     return 0;
 }
@@ -571,7 +572,8 @@ int recoveryFiles(){
     system("cp " FILE_SLAVE_CP      " "  FILE_SLAVE      );
     system("cp " FILE_MASTER_CP     " "  FILE_MASTER     );
     system("cp " STD_LOOP_CP        " "  STD_LOOP        );
-    system("cp " PS_AUX_CP          " "  PS_AUX          );
+    system("cp " PS_AUX1_CP         " "  PS_AUX1         );
+    system("cp " PS_AUX2_CP         " "  PS_AUX2         );
 
     return 0;
 }
@@ -620,7 +622,6 @@ int initializingCubeSat(int check){
 
 
 //General communication functions
-
 
 int write_i2c(char *file_name, int packet, int qt, int addr, int chan){
 
@@ -741,72 +742,76 @@ int read_i2c(char *file_name, int position, int addr, int chan){
     return 1;
 }
 
-int tx_uart (char *a, int tam){
+int tx_uart(char* str, int tam){
 
-    int serial_port, i,j,aux;
-    char* senddat;
+    int serial_port, aux;
+    int i = 0;
+    char senddat[tam + 1];
 
-    if ((serial_port = serialOpen ("/dev/ttyS0", 9600)) < 0){	//open serial port
-        fprintf (stderr, "Unable to open /dev/ttyAMA0\n");
+    if((serial_port = serialOpen("/dev/ttyS0", 9600)) < 0){	//open serial port
+        fprintf(stderr, "Unable to open /dev/ttyAMA0\n");
         return 1;
     }
 
-    if (wiringPiSetup () == -1){					//start wiringPi setup
+    if(wiringPiSetup() == -1){					//start wiringPi setup
         fprintf(stdout, "Unable to start wiringPi: %s\n", strerror(errno));
         return 1;
     }
-    j = 0;
-    while (tam>0){
-        serialPutchar(serial_port, a[j]);
+
+    for(i = 0; i < tam; i++){ senddat[i] = str[i];}
+    str[tam] = '\0';
+
+    i = 0;
+    while (tam >= 0){
+        serialPutchar(serial_port, str[i]);
         tam--;
-        j++;
+        i++;
     }
-    //PRECISA IMPLEMENTAR O \0!
-    //if (tam == 0){
-      //  serialPutchar(serial_port, a[])/
-    //}
+
+
 }
 
-int rx_uart (char *dat){
+int rx_uart(char* str){
+    int serial_port;
+    char datachar;
 
-    int serial_port, i,aux;
-    //char dat [20];
-
-    if ((serial_port = serialOpen ("/dev/ttyS0", 9600)) < 0){	//open serial port
-        fprintf (stderr, "Unable to open /dev/ttyAMA0\n");
+    if((serial_port = serialOpen("/dev/ttyS0", 9600)) < 0){	//open serial port
+        fprintf(stderr, "Unable to open /dev/ttyS0\n");
         return 1;
     }
 
-    if (wiringPiSetup () == -1){					//start wiringPi setup
+    if(wiringPiSetup() == -1){					//start wiringPi setup
         fprintf(stdout, "Unable to start wiringPi: %s\n", strerror(errno));
         return 1;
     }
 
-
-    aux = 1;
-    i = 0;
+    int aux = 1;
+    int i = 0;
     while(aux){
         if(serialDataAvail(serial_port)){
             while (aux){
                 if (serialDataAvail(serial_port)){
-                    dat[i] = serialGetchar(serial_port);
-                    if (dat[i] == '\0')
-                        aux = 0;		//receive character from the serial port
+                    datachar = serialGetchar(serial_port);
+                    if (datachar == '\0'){ aux = 0;}
+                    else{str[i] = datachar;}
                     fflush(stdout);
                     i++;
                 }
             }
-            //printf("chegou %s\n", dat);
-            //i = 0;
         }
     }
+    return 1;
 }
+
+
+
+
+
 
 
 
 
 //CubeSat communication fuctions
-
 
 int sendSimpleMessage(char *block, int op_mode, int whoami, int aux){
 
@@ -829,12 +834,10 @@ int powerSupplyMaster(){
 
     char ps_block[161];
     char aux1 [81];
-    char a[2] = "a";
+    char a = 'a';
     int i;
 
-
-    //LEITURA INAS RASP MASTER E ESCRITA NO ARQUIVO PS_AUX
-    system("python ina.py");
+    system("python inaMaster.py");
 
     //ENVIA CARACTERE VIA UART PARA RASP SLAVE PARA INICIAR LEITURA INAS RASP SLAVE
     tx_uart(a,1);
@@ -843,10 +846,10 @@ int powerSupplyMaster(){
     rx_uart(aux1);
 
     //ESCRITA PS_AUX DADOS INA RASP SLAVE
-    writeMessage(PS_AUX, aux1, 1, 80, 0);
+    writeMessage(PS_AUX1, aux1, 1, 80, 0);
 
     //LÊ O PS_AUX PARA PEGAR A STRING E A SALVA NO PS_FILE
-    readMessage(PS_AUX, ps_block, 0, PS_SIZE, 0);
+    readMessage(PS_AUX1, ps_block, 0, PS_SIZE, 0);
     valueGetter(PS_NUMBER, &i);
     writeMessage(PS_FILE, ps_block, i+1, PS_SIZE, 0);
     valueSetter(PS_NUMBER, i+1);
@@ -856,7 +859,7 @@ int powerSupplySlave(){
 
     char aux[81];
 
-    system("python ina2.py"); //LEITURA DADOS INAS RASP SLAVE E ESCRITA NO ARQUIVO PS_AUX2
+    system("python inaSlave.py"); //LEITURA DADOS INAS RASP SLAVE E ESCRITA NO ARQUIVO PS_AUX2
     readMessage(PS_AUX2, aux, 0, 80, 0);	 //LEITURA DO ARQUIVO PS_AUX2
     tx_uart(aux,80);		// ENVIO PARA A RASP MASTER OS DADOS DOS INAS DA RASP SLAVE
 
@@ -1043,7 +1046,6 @@ int temperatureMonitor(){
 
 //Base interface functions
 
-
 int interfaceOperator(){
 
     int mode = 0;
@@ -1058,8 +1060,6 @@ int interfaceOperator(){
     printf("   9. Shutdown 'ZenSat' and exit 'CubeSat Monitor'.\n\n\n\n\n\n\n");
     printf(" Your option: ");
     scanf ("%d", &mode);
-    printf("=========================================================================\n");
-
     return mode;
 }
 
@@ -1366,8 +1366,6 @@ int changeOperatingMode(){
     return 0;
 }
 
-
-
 int checkZenSatState(){
     int cycles = 0;
     while(cycles < 3){
@@ -1385,7 +1383,6 @@ int checkZenSatState(){
     }
     return 0;
 }
-
 
 int readPackages(int mode){
     //Mode 0  refers to packages received and mode 1, to packages sended
@@ -1459,19 +1456,34 @@ int shutdownZenSat(){
 //Main functions
 
 int CubeSatSlave(){
+
     char status;
     int main_loop_control = 1;
+    int check;
+
+    printf("Initializing CubeSat on slave...\n");
+    initializingCubeSat();
+
     while(main_loop_control){
-        //LER CHAR NO UART
+        printf("Waiting for Master commands...\n");
+        rx_uart(status);
         switch (status){
             case 'a':{
+                printf("Command received - Mode a - Power supply");
                 powerSupplySlave();
                 status='0';
                 break;
             }
+            case 'b':{
+                //TiagoBrilha
+                break;
+            }
+            case 'c':{
+                //Pointing
+                break;
+            }
         }
     }
-
     return 0;
 }
 
@@ -1865,7 +1877,7 @@ int createZenithFiles(){
 
     int i = 0;
     int counter;
-    int aux[21];
+    int aux[22];
 
     aux[ 0] = createFile(CHECK_POWERED);
     aux[ 1] = createFile(NEW_TM);
@@ -1887,13 +1899,14 @@ int createZenithFiles(){
     aux[17] = createFile(FILE_SLAVE);
     aux[18] = createFile(FILE_MASTER);
     aux[19] = createFile(STD_LOOP);
-    aux[20] = createFile(PS_AUX);
+    aux[20] = createFile(PS_AUX1);
+    aux[21] = createFile(PS_AUX2);
 
 
-    for (i=0;i<21;i++){ if (aux[i] == 0){ counter ++; }}
+    for (i=0;i<22;i++){ if (aux[i] == 0){ counter ++; }}
 
     if   (counter>0) { printf("\n%d files cannot be created", counter); return 1;}
-    else { printf("\nFiles successfully created\n");                    return 0;}
+    else { printf("\nFiles successfully created\n\n");                  return 0;}
 }
 
 int compileCodes(int mode){
@@ -1919,7 +1932,7 @@ int compileCodes(int mode){
         system("gcc cubeSlave.c -o cubeS -lm -lwiringPi -L/usr/local/lib");
         printf("File cubeSlave.c was already compiled.\n");
         printf("Compiling base.c file... \n");
-        system("gcc base.c -o base -lm");
+        system("gcc base.c -o base -lm -lwiringPi -L/usr/local/lib");
         printf("File base.c was already compiled. \n");
     }
     else {
@@ -1936,7 +1949,7 @@ int installer(){
     printf("Zenith Cube Sat v.1.0 installer ... \n");
     printf("Press: \n1 - to install CubeSat version;\n2 - to install Base version;\n3 - to install both;\n");
     scanf("%d", &mode);
-    delay(1500000);
+    headerInterface();
     printf("Creating files... \n");
     createZenithFiles();
     printf("Compiling files... \n");
